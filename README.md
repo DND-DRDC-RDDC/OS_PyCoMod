@@ -54,8 +54,8 @@ class simple_sir(sp.model):
     self.N = sp.equation(lambda: self.S() + self.I() + self.R())
     
     #parameters
-    self.b = self.parameter(0.2)
-    self.g = self.parameter(0.1)
+    self.b = sp.parameter(0.2)
+    self.g = sp.parameter(0.1)
     
     #flows
     self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
