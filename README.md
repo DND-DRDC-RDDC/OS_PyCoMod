@@ -2,6 +2,8 @@
 
 SIRplus is a Python package for building and running Susceptible-Infectious-Recovered (SIR) and similar compartment models derived from systems of differential equations.
 
+The project is being released as part of Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public.
+
 The key components of the package are a set of Python classes:
  1) model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  2) users define a custom model class that contains these elements as well as nested sub-models;
