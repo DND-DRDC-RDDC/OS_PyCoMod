@@ -24,11 +24,13 @@ To install SIRplus in [Google Colab](https://colab.research.google.com), run the
 
     ! pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
 
-After installing the package, import SIRplus into your code. The examples that follow assume SIRplus has been imported as follows, using the abreviated name *sp*.
+After installing the package, import SIRplus into your code.
 
 ```Python
 import sirplus as sp
 ```
+
+The examples that follow were tested in [Google Colab](https://colab.research.google.com) and assume that SIRplus has been installed and imported as above using the abreviated name *sp*.
 
 ## A simple SIR model example
 
