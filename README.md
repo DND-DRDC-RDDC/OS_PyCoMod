@@ -4,15 +4,15 @@
 
 SIRplus is a Python package for building and running Susceptible-Infectious-Recovered (SIR) and similar compartment models derived from systems of differential equations.
 
-The project is being released as part of Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public.
+The project is being released under Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public. SIRplus was developed by scientists in the Centre for Operational Research and Analysis (CORA) within Defence Research and Development Canada (DRDC) in order to model the spread of COVID-19 in specific populations of interest to the Canadian Armed Forces.
 
-The key components of the package are a set of Python classes:
+The key components of SIRplus are a set of Python classes:
  1. model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  1. users define a custom model class that contains these elements as well as nested sub-models;
  1. a run manager class is used to keep track of various models, initial conditions and saved output; and
  1. a plotter class is used for visualizing the results of model runs.
 
-Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and generate time series output for the state of the system. Unlike a pure differential equation solver, SIRplus allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
+Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
 
 ## Installation
 
@@ -24,12 +24,11 @@ To install SIRplus in [Google Colab](https://colab.research.google.com), run the
 
     ! pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
 
-Then import SIRplus into your code. The examples that follow assume SIRplus has been imported as follows, using the abreviated name *sp*.
+After installing the package, import SIRplus into your code. The examples that follow assume SIRplus has been imported as follows, using the abreviated name *sp*.
 
 ```Python
 import sirplus as sp
 ```
-
 
 ## A simple SIR model example
 
