@@ -115,4 +115,70 @@ Each call to the plotter's *plot* function must specify a run and an output. The
 
 # Stochastic model elements
 
-In SIRplus, we can also introduce stochastic model elements and run a Monte Carlo simulation, rather than a single model run. First we might make
+In SIRplus, we can also introduce stochastic model elements and run Monte Carlo simulations. For example, two realistic improvements to the simple SIR model would be to sample the transmission rate from a distribution reflecting the uncertainty in this parameter, and to make the flows stochastic and discrete. We show these changes below in a new model class called *mc_sir*.
+
+```Python
+import numpy as np
+rng = np.random.default_rng()
+
+class mc_sir(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool(95)
+        self.I = sp.pool(5)
+        self.R = sp.pool(0)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+
+        #output
+        self._set_output('S','I','R')
+
+m2 = mc_sir()
+```
+
+The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a SIRplus *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
+
+The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population. The flow *Fir* has similiary been updated such that each infected person has a probability of recovering in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
+
+Finally, we instantiate the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
+
+We can now run the model in Monte Carlo mode using the run manager's *run_mc* function, passing the number of replications (reps) in the run settings, and giving the run a new label.
+
+```Python
+mgr.run_mc(m2, duration=150, reps=100, label='My run - mc')
+```
+
+We can plot the results of a Monte Carlo run using the plotter's *plot_mc* function. The optional *interval* parameter specifies the percentile range from the distribution of outputs to be displayed. An interval of 50 means the middle 50% of the distribution, or the inter-quartile range. An interval of 90 would display the region from the 5th to 95th percentile.
+
+```Python
+plt = sp.plotter(title='Infections', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+
+
+
+
+
+
+
+
+
