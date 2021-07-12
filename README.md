@@ -173,8 +173,32 @@ plt.plot_mc(mgr['My run - mc'],'R', color='green', interval=50, label = 'R')
 plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 'Total')
 ```
 
+# Nested models
 
+SIRplus models support nesting which allows larger models to be built efficiently. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two sub-populations which are both instances of the *mc_sir* model defiend previously.
 
+```Python
+class mix_sir(sp.model):
+    def _build(self):
+
+        #sub models
+        self.GrpA = mc_sir()
+        self.GrpB = mc_sir()
+
+        #transmission parameter between students and instructors
+        self.b_mix = sp.parameter(0.1)
+        
+        #cross-infection flows
+        self.Fsi_GrpA = sp.flow(lambda: rng.binomial(self.GrpA.S(), self.b_mix()*self.GrpB.I()/self.GrpB.N()), src=self.GrpA.S, dest=self.GrpA.I)
+        self.Fsi_GrpB = sp.flow(lambda: rng.binomial(self.GrpB.S(), self.b_mix()*self.GrpA.I()/self.GrpA.N()), src=self.GrpB.S, dest=self.GrpB.I)
+        
+        #output
+        self._set_output('GrpA','GrpB')
+
+m3 = mix_sir()
+```
+
+In the code above, the two interacting populations are *GrpA* and *GrpB*, both created as instances of the *mc_sir* model. Each group behaves internally as before acording to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix* defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group.
 
 
 
