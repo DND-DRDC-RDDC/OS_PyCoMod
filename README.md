@@ -113,4 +113,6 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the run label used earlier. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together, e.g. *S + I + R* in the last line, above.
 
+# Stochastic model elements
 
+In SIRplus, we can also introduce stochastic model elements and run a Monte Carlo simulation, rather than a single model run. First we might make
