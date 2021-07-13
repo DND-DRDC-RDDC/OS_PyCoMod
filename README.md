@@ -184,9 +184,9 @@ plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 
 ![image](https://user-images.githubusercontent.com/86741975/125520231-accec0af-5762-4c4e-9002-7b179df6089f.png)
 
 
-# Nested models
+# Nested models and model initialization
 
-SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two instances of of the *mc_sir* model defiend previously.
+SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two instances of of the *mc_sir* model defined previously.
 
 ```Python
 class mix_sir(sp.model):
@@ -211,15 +211,54 @@ m3 = mix_sir()
 
 In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before acording to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix* defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group.
 
-While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the above nested model, the dictionary would look something like the following.
+While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the *mix_sir* model, above, the initialization dictionary would look something like the following.
 
 ```Python
-init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.5, 'g':0.1}
-init_GrpB = {'S':29, 'I':1, 'R':0, 'b_m':0.3, 'b_s':0.7, 'g':0.1}
-init_mix_sir = {'b_mix':0.1, 'GrpA':init_GrpA, 'GrpB':init_GrpB, 'reps':100, 'end':150}
+init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}
+init_GrpB = {'S':30, 'I':0, 'R':0, 'b_m':0.3, 'b_s':0.05, 'g':0.1}
+init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}
 ```
 
-The dictionary keys are the names of the model elements, and the values are used to initialize the element. 
+The dictionary keys are the names of the model elements, and the dictionary values are used to initialize the element. The only model elements that accept input are pools and parameters. To initialize a sub-model, such as *GrpA* and *GrpB* in this example, the entry value is another dictionary designed to initialize the sub-model. Hense, nested models are initialized with equivalently nested dictionaries. In this example, GrpA is initialized as before while GrpB is a smaller population with a higher mean transmission rate but with no initial infections.
+
+The top-level initialization dictionary, *init_mix* in this case, can also contain some special entries to control the run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
+
+We can then run the model using the initialization dictionary.
+
+```Python
+mgr.run_mc(m3, init=init_mix, label='My run - mc - mix')
+```
+
+And we can then plot what happens to GrpA.
+
+```Python
+plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc - mix'],'GrpA.S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpA.I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpA.R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/125534046-615c52ce-7740-432c-ac19-3d233a9dda32.png)
+
+And GrpB.
+
+```Python
+plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc - mix'],'GrpB.S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpB.I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpB.R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc - mix'],'GrpB.S + GrpB.I + GrpB.R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/125534082-e84971f1-3436-4dda-b431-31ae293f42ba.png)
+
+Note in the above code that to specify the output we want to plot in a nested model, we use dot-notation to navigate the sub-models. E.g. *GrpB.S* plots the susceptible population within GrpB.
+
+Excel...
+
+
+
 
 
 
