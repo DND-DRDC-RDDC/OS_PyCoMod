@@ -6,13 +6,18 @@ SIRplus is a Python package for building and running Susceptible-Infectious-Reco
 
 The project is being released under Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public. SIRplus was developed by scientists in the Centre for Operational Research and Analysis (CORA) within Defence Research and Development Canada (DRDC) in order to model the spread of COVID-19 in specific populations of interest to the Canadian Armed Forces.
 
-The key components of SIRplus are a set of Python classes:
+The primary developers and contributors to this work are:
+ - Mr. Stephen Okazawa
+ - Ms. Josée van den Hoogen
+ - Dr. Steve Guillouzic
+
+SIRplus is composed of a set of Python classes:
  1. model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  1. users define a custom model class that contains these elements as well as nested sub-models;
  1. a run manager class is used to keep track of various models, initial conditions and saved output; and
  1. a plotter class is used for visualizing the results of model runs.
 
-Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
+Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
 
 ## Installation
 
@@ -104,14 +109,17 @@ mgr.run(m, duration=150, label='My run')
 Finally, we can plot the results of the run using the SIRplus *plotter*.  First we create an instance of the plotter, which creates a Matplotlib Figure, then we can plot the specific outputs from the run on the figure axes.
 
 ```Python
-plt = sp.plotter(title='Infections', ylabel='Population', fontsize=14)
+plt = sp.plotter(title='SIR Time Series', ylabel='Population', fontsize=14)
 plt.plot(mgr['My run'],'S', color='blue', label = 'S')
 plt.plot(mgr['My run'],'I', color='orange', label = 'I')
 plt.plot(mgr['My run'],'R', color='green', label = 'R')
 plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 ```
 
+![image](https://user-images.githubusercontent.com/86741975/125519680-4f964905-8c1b-4565-acf9-fac73ea403f4.png)
+
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the run label used earlier. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together, e.g. *S + I + R* in the last line, above.
+
 
 # Stochastic model elements
 
@@ -166,16 +174,19 @@ mgr.run_mc(m2, duration=150, reps=100, label='My run - mc')
 We can plot the results of a Monte Carlo run using the plotter's *plot_mc* function. The optional *interval* parameter specifies the percentile range from the distribution of outputs to be displayed. An interval of 50 means the middle 50% of the distribution, or the inter-quartile range. An interval of 90 would display the region from the 5th to 95th percentile.
 
 ```Python
-plt = sp.plotter(title='Infections', ylabel='Population', fontsize=14)
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - mc'],'S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - mc'],'I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - mc'],'R', color='green', interval=50, label = 'R')
 plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 'Total')
 ```
 
+![image](https://user-images.githubusercontent.com/86741975/125520231-accec0af-5762-4c4e-9002-7b179df6089f.png)
+
+
 # Nested models
 
-SIRplus models support nesting which allows larger models to be built efficiently. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two sub-populations which are both instances of the *mc_sir* model defiend previously.
+SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two instances of of the *mc_sir* model defiend previously.
 
 ```Python
 class mix_sir(sp.model):
@@ -186,7 +197,7 @@ class mix_sir(sp.model):
         self.GrpB = mc_sir()
 
         #transmission parameter between students and instructors
-        self.b_mix = sp.parameter(0.1)
+        self.b_mix = sp.parameter()
         
         #cross-infection flows
         self.Fsi_GrpA = sp.flow(lambda: rng.binomial(self.GrpA.S(), self.b_mix()*self.GrpB.I()/self.GrpB.N()), src=self.GrpA.S, dest=self.GrpA.I)
@@ -198,8 +209,17 @@ class mix_sir(sp.model):
 m3 = mix_sir()
 ```
 
-In the code above, the two interacting populations are *GrpA* and *GrpB*, both created as instances of the *mc_sir* model. Each group behaves internally as before acording to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix* defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group.
+In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before acording to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix* defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group.
 
+While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the above nested model, the dictionary would look something like the following.
+
+```Python
+init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.5, 'g':0.1}
+init_GrpB = {'S':29, 'I':1, 'R':0, 'b_m':0.3, 'b_s':0.7, 'g':0.1}
+init_mix_sir = {'b_mix':0.1, 'GrpA':init_GrpA, 'GrpB':init_GrpB, 'reps':100, 'end':150}
+```
+
+The dictionary keys are the names of the model elements, and the values are used to initialize the element. 
 
 
 
