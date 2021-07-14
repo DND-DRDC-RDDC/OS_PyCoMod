@@ -120,6 +120,7 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the run label used earlier. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together, e.g. *S + I + R* in the last line, above.
 
+Note that the examples provided here are primarily designed to illustrate the features of SIRplus.
 
 # Stochastic model elements
 
@@ -186,7 +187,7 @@ plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 
 
 # Nested models and model initialization
 
-SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains the two instances of of the *mc_sir* model defined previously.
+SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains two instances of the *mc_sir* model defined previously.
 
 ```Python
 class mix_sir(sp.model):
@@ -196,7 +197,7 @@ class mix_sir(sp.model):
         self.GrpA = mc_sir()
         self.GrpB = mc_sir()
 
-        #transmission parameter between students and instructors
+        #transmission parameter between groups
         self.b_mix = sp.parameter()
         
         #cross-infection flows
