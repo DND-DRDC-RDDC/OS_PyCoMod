@@ -110,6 +110,9 @@ class model:
   
   #get the initial condition dict for this model
   def _get_init_dict(self):
+    
+    self._reset()
+    
     d = {}
     elements = [(k,v) for k,v in self.__dict__.items() if isinstance(v, (pool, parameter, model))]
     
@@ -125,6 +128,8 @@ class model:
   #get dataframes representing initial conditions for the model        
   def _get_init_df(self, d=None, key=None):
 
+    self._reset()
+    
     if d is None:
       d = {}
 
