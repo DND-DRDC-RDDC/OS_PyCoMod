@@ -208,9 +208,9 @@ class mix_sir(sp.model):
 m3 = mix_sir()
 ```
 
-In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before acording to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix* defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list.
+In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list.
 
-While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the *mix_sir* model, above, the initialization dictionary would look something like the following.
+While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the *mix_sir* model, above, the initialization dictionary would look something like *init_mix* below.
 
 ```Python
 init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}
@@ -218,24 +218,24 @@ init_GrpB = {'S':30, 'I':0, 'R':0, 'b_m':0.3, 'b_s':0.05, 'g':0.1}
 init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}
 ```
 
-The dictionary keys are the names of the model elements, and the dictionary values are used to initialize the element. The only model elements that accept input are pools and parameters. To initialize a sub-model, such as *GrpA* and *GrpB* in this example, the entry value is another dictionary designed to initialize the sub-model. Hense, nested models are initialized with equivalently nested dictionaries. In this example, GrpA is initialized as before while GrpB is a smaller population with a higher mean transmission rate but with no initial infections.
+The dictionary keys are the names of the model elements, and the dictionary values are used to initialize the element. The only model elements that accept input are pools, parameters and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, which is *init_GrpA* in this case. Hense, nested models are initialized with equivalently nested dictionaries. In this example, GrpA is given the same initialization values as before while GrpB is a smaller population with a higher mean transmission rate but with no initial infections.
 
 The top-level initialization dictionary, *init_mix* in this case, can also contain some special entries to control the run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
 
 We can then run the model using the initialization dictionary.
 
 ```Python
-mgr.run_mc(m3, init=init_mix, label='My run - mc - mix')
+mgr.run_mc(m3, init=init_mix, label='My run - mix')
 ```
 
 And we can then plot what happens to GrpA.
 
 ```Python
 plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mc - mix'],'GrpA.S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpA.I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpA.R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', interval=50, label = 'Total')
+plt.plot_mc(mgr['My run - mix'],'GrpA.S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mix'],'GrpA.I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mix'],'GrpA.R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', interval=50, label = 'Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125534046-615c52ce-7740-432c-ac19-3d233a9dda32.png)
@@ -244,10 +244,10 @@ And GrpB.
 
 ```Python
 plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mc - mix'],'GrpB.S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpB.I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpB.R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mc - mix'],'GrpB.S + GrpB.I + GrpB.R', color='black', interval=50, label = 'Total')
+plt.plot_mc(mgr['My run - mix'],'GrpB.S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mix'],'GrpB.I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mix'],'GrpB.R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mix'],'GrpB.S + GrpB.I + GrpB.R', color='black', interval=50, label = 'Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125534082-e84971f1-3436-4dda-b431-31ae293f42ba.png)
@@ -256,7 +256,7 @@ Note in the above code that to specify the output we want to plot in a nested mo
 
 # Initialization files
 
-Initialization dictionaries are useful when we want to set up the model from code, but it is often practical to contain the initialization data in a file. This allows different model setups to be saved and edited by hand. For this purpose, SIRplus models can also be initialized from an Excel file. The Excel file template to initialize a particular model can be generated by the model itself by calling *_write_excel_init* and providing a file name.
+Initialization dictionaries are useful when we want to set up the model in Python code, but it is often practical to contain the initialization data in a file. This allows different model setups to be saved and edited by hand. For this purpose, SIRplus models can also be initialized from an Excel file. The Excel file template to initialize a particular model can be generated by the model itself by calling *_write_excel_init* and providing a file name.
 
 ```Python
 m3._write_excel_init('init_mix.xlsx')
@@ -278,6 +278,12 @@ mgr.run_mc(m3, init='init_mix.xlsx', label='My run - mix - xls')
 
 Viewing the run output is the same as before.
 
+<!--
+
+# Dynamic model parameters
+It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations.
+
+-->
 
 
 
