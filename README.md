@@ -12,10 +12,10 @@ The primary developers and contributors to this work are:
  - Dr. Steve Guillouzic
 
 SIRplus is composed of a set of Python classes:
- 1. model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
- 1. a model class that contains these elements as well as nested sub-models;
- 1. a run manager class is used to keep track of various models, initial conditions and saved output; and
- 1. a plotter class is used for visualizing the results of model runs.
+ - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
+ - a model class that contains these elements as well as nested sub-models;
+ - a run manager class is used to keep track of various models, initial conditions and saved output; and
+ - a plotter class is used for visualizing the results of model runs.
 
 Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
 
