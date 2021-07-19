@@ -282,47 +282,68 @@ Viewing the run output is the same as before.
 
 
 # Dynamic model parameters
-It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations. For example, if a parameter will increase linearly over time, it can defined using a linear function.
+It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations. For example, we might want to modify the *simple_SIR* model to make the transmission rate decay over time, reflecting increasing adherence to public health measures. So we could replace the parameter *b* with an equation implementing an exponential decay.
 
 ```Python
-self.x = sp.equation(lambda: 2 + 1.1*self._t)
+class mod_sir(sp.model):
+  def _build(self):
+    #pools
+    self.S = sp.pool(95)
+    self.I = sp.pool(5)
+    self.R = sp.pool(0)
+    
+    #equations
+    self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+
+    #parameters
+    self.b = sp.equation(lambda: 0.2*(0.98)**self._t())
+    self.g = sp.parameter(0.1)
+    
+    #flows
+    self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
+    self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+    
+    #output
+    self._set_output('S', 'I', 'R', 'b')
+    
+m4 = mod_sir()
 ```
 
-Note that the current simulation time can be accessed via the special variable *self._t*. We can also superimpose a stochastic effect within the equation.
+Note that the current simulation time can be accessed by calling the special variable *self._t*. We can view the modified transmission rate over time by adding *b* to the list of outputs, running the model and then plotting it.
 
 ```Python
-self.x = sp.equation(lambda: 2 + 1.1*self._t + rng.normal(0, 0.5))
+mgr.run(m4, duration=150, label='Mod SIR')
+
+plt = sp.plotter(title='Dynamic transmission rate', ylabel='Value', fontsize=14)
+plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ```
 
-Equations are updated each time step, so the RNG will constantly vary the value of *x* as the simulation runs. This is different from a SIRplus *sample* which is only evaluated at the start of a run.
+![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
-In the above twp examples, any of the numerical constants could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via the initialization dictionary or initialization file. This is generally the advantage of using parameters rather than hard-coded literals in your model.
 
-Sometimes we want a value to change to specific values at specific times, in other words, a step function. This is not difficult to implement as a SIRplus equation, but it is also not trivial. For this purpose, SIRplus includes an equation sub-class called *step*.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. This is possible to implement as a SIRplus equation, but it is not trivial. For this purpose, SIRplus includes an equation sub-class called *step*. For example, we might want to increase or decrease the transmission rate at certain times, reflecting the specific measures coming into and out of force, like the closing and re-openning of restaurants.
 
 ```Python
-self.x = sp.step([0,1,20], [0, 50, 100])
+self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
 ```
 
-The first parameter in the step class is a list of values, and the second parameter is a list of times at which the corresponding value will be applied and held. We can see what this does by building a minimal model, running it and plotting it.
+This step equation will produce an initial transmission rate of 0.2, reduce this to 0.13 at time 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
+
+![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
+
+In the above examples, the numerical constants use to define *b* could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via the initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+
+In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
 ```Python
-class simple_step(sp.model):
-    def _build(self):
-        self.x = sp.step([0,1,2], [0, 50, 100])
-        self._set_output('x')
-
-m4 = simple_step()
-
-mgr.run(m4, duration=150, label='step')
-
-plt = sp.plotter(title='Step function', ylabel='Value', fontsize=14)
-plt.plot(mgr['step'],'x', color='blue', label = 'x')
+self.b_v = sp.parameter([0.2, 0.13, 0.2])
+self.b_t = sp.parameter([0, 7, 21])
+self.b = sp.step(self.b_v(), self.b_t())
 ```
 
+If we create an Excel initialization file for this model, we will now see two vector inputs for the parameters *b_v* and *b_t*, so we can edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this case. More values and times can be added to the initialization Excel file as needed, so long as there is always a corresponding time for each value.
 
-
-
+![image](https://user-images.githubusercontent.com/86741975/126209560-0027f6d4-5b18-4a6f-bd08-062a64975d36.png)
 
 
 <!--
