@@ -120,6 +120,8 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the run label used earlier. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together, e.g. *S + I + R* in the last line, above.
 
+Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
+
 # Stochastic model elements
 
 In SIRplus, we can also introduce stochastic model elements and run Monte Carlo simulations. For example, two improvements to the simple SIR model would be to sample the transmission rate from a distribution reflecting the uncertainty in this parameter, and to make the flows stochastic and discrete. We show these changes below in a new model class called *mc_sir*.
@@ -278,12 +280,55 @@ mgr.run_mc(m3, init='init_mix.xlsx', label='My run - mix - xls')
 
 Viewing the run output is the same as before.
 
-<!--
 
 # Dynamic model parameters
-It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations.
+It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations. For example, if a parameter will increase linearly over time, it can defined using a linear function.
 
+```Python
+self.x = sp.equation(lambda: 2 + 1.1*self._t)
+```
+
+Note that the current simulation time can be accessed via the special variable *self._t*. We can also superimpose a stochastic effect within the equation.
+
+```Python
+self.x = sp.equation(lambda: 2 + 1.1*self._t + rng.normal(0, 0.5))
+```
+
+Equations are updated each time step, so the RNG will constantly vary the value of *x* as the simulation runs. This is different from a SIRplus *sample* which is only evaluated at the start of a run.
+
+In the above twp examples, any of the numerical constants could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via the initialization dictionary or initialization file. This is generally the advantage of using parameters rather than hard-coded literals in your model.
+
+Sometimes we want a value to change to specific values at specific times, in other words, a step function. This is not difficult to implement as a SIRplus equation, but it is also not trivial. For this purpose, SIRplus includes an equation sub-class called *step*.
+
+```Python
+self.x = sp.step([0,1,20], [0, 50, 100])
+```
+
+The first parameter in the step class is a list of values, and the second parameter is a list of times at which the corresponding value will be applied and held. We can see what this does by building a minimal model, running it and plotting it.
+
+```Python
+class simple_sir(sp.model):
+    def _build(self):
+        self.x = sp.step([0,1,2], [0, 50, 100])
+        self._set_output('x')
+
+m4 = simple_sir()
+
+mgr.run(m4, duration=150, label='step')
+
+plt = sp.plotter(title='Step function', ylabel='Value', fontsize=14)
+plt.plot(mgr['step'],'x', color='blue', label = 'x')
+```
+
+
+
+
+
+
+<!--
+# Vectorization
 -->
+
 
 
 
