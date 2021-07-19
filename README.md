@@ -86,15 +86,15 @@ class simple_sir(sp.model):
     self._set_output('S', 'I', 'R')
 ```
 
-The first line, above, imports the sirplus package. We then define a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of the model. In this case, we create the three compartments using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions corresponding to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, reference the pool object, but don't call it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first line, above, imports the sirplus package. We then define a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of the model. In this case, we create the three compartments using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
-Lastly, having defined the *simple_sir* model class, we create an instance of it.
+Having defined the *simple_sir* model class, we can now create an instance of it.
 
 ```Python
 m = simple_sir()
 ```
 
-Having created the model, we use another SIRplus object called a *run_manager* to run it. The run manager keeps track of multiple models, run settings and output so that batches of runs can be automated. First we create an instance of the run manager.
+We use another SIRplus object called a *run_manager* to run it. The run manager keeps track of multiple models, run settings and output so that batches of runs can be automated. First we create an instance of the run manager.
 
 ```Python
 mgr = sp.run_manager()
@@ -106,7 +106,7 @@ Now we can tell the run manager to run the simple_SIR model. We can supply run s
 mgr.run(m, duration=150, label='My run')
 ```
 
-Finally, we can plot the results of the run using the SIRplus *plotter*.  First we create an instance of the plotter, which creates a Matplotlib Figure, then we can plot the specific outputs from the run on the figure axes.
+Finally, we can plot the results of the run using the SIRplus *plotter*.  First we create an instance of the plotter, which creates a Matplotlib Figure, and then we can plot outputs from the run on the figure axes.
 
 ```Python
 plt = sp.plotter(title='SIR Time Series', ylabel='Population', fontsize=14)
@@ -118,7 +118,7 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 ![image](https://user-images.githubusercontent.com/86741975/125519680-4f964905-8c1b-4565-acf9-fac73ea403f4.png)
 
-Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the run label used earlier. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together, e.g. *S + I + R* in the last line, above.
+Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
 
 Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
 
@@ -162,9 +162,9 @@ m2 = mc_sir()
 
 The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a SIRplus *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
 
-The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population. The flow *Fir* has similiary been updated such that each infected person has a probability of recovering in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
+The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
 
-Finally, we instantiate the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
+Finally, we create an instance of the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
 
 We can now run the model in Monte Carlo mode using the run manager's *run_mc* function, passing the number of replications (reps) in the run settings, and giving the run a new label.
 
@@ -224,7 +224,7 @@ The dictionary keys are the names of the model elements, and the dictionary valu
 
 The top-level initialization dictionary, *init_mix* in this case, can also contain some special entries to control the run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
 
-We can then run the model using the initialization dictionary.
+We can then perform a run using the dictionary to initialize the model.
 
 ```Python
 mgr.run_mc(m3, init=init_mix, label='My run - mix')
@@ -266,9 +266,30 @@ m3._write_excel_init('init_mix.xlsx')
 
 In Google Colab, the initialization file will be written to session storage and can be downloaded. In a local Python environment, the file is written to local storage.
 
-The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the model and each sub-model are contained in individual tabs. In this case, there are three tabs. The first tab is always called *init* and it contains the top-level initialization inputs which are *GrpA*, *GrpB*, and *b_mix*.  We enter the value for the *b_mix* parameter here. The *init* tab also contains the special run control entries including *_end* and *_reps*. Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *init.GrpA* which is the name of the second tab. In the *init.GrpA* tab we find the inputs for the elements of the GrpA sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*. The same applies to the *GrpB* sub-model. Each tab also contains an *_out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *_set_output* within the model definition.
+The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the model and each sub-model are contained in individual tabs. In this case, there are three tabs.
 
-We can edit the Excel file, for example, by changing b_mix to 0.025 (cutting the transmission rate between the two populations in half) and save it.
+![image](https://user-images.githubusercontent.com/86741975/126229677-360af357-0a0b-4984-beef-59d634188f1b.png)
+
+The first tab is always called *init* and it contains the top-level initialization inputs which are *GrpA*, *GrpB*, and *b_mix*.
+
+![image](https://user-images.githubusercontent.com/86741975/126227350-953feb05-2c2c-4f55-a939-78d914ad0bbe.png)
+
+We can edit the value for the *b_mix* parameter here.
+
+The *init* tab also contains the special run control entries which are:
+ - *_t* - the initial simulation time (usually 0)
+ - *_date* - the initial simulation date
+ - *_dt* - the simulation time step
+ - *_end* - the simulation end time
+ - *_reps* - the number of replications for Monte Carlo runs
+
+Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *init.GrpA* which is the name of the second tab. It should usually not be necessary to change the sheet name entry under a sub-model. In the *init.GrpA* tab we find the inputs for the elements of the GrpA sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
+
+![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
+
+The same applies to the *GrpB* sub-model. Each tab also contains an *_out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *_set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
+
+We can edit the values in the Excel file, for example, by changing b_mix to 0.025 (cutting the transmission rate between the two populations in half) and then save it.
 
 In Google Colab, we then have to upload the edited file to session storage.
 
@@ -321,7 +342,7 @@ plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. This is possible to implement as a SIRplus equation, but it is not trivial. For this purpose, SIRplus includes an equation sub-class called *step*. For example, we might want to increase or decrease the transmission rate at certain times, reflecting the specific measures coming into and out of force, like the closing and re-openning of restaurants.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. This is possible to implement as a SIRplus equation, but it is not trivial. For this purpose, SIRplus includes an equation sub-class called *step*. For example, we might want to increase or decrease the transmission rate at certain times, reflecting specific measures coming into and out of force.
 
 ```Python
 self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
@@ -331,7 +352,7 @@ This step equation will produce an initial transmission rate of 0.2, reduce this
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
-In the above examples, the numerical constants use to define *b* could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via the initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
 
 In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
@@ -340,11 +361,17 @@ self.b_v = sp.parameter([0.2, 0.13, 0.2])
 self.b_t = sp.parameter([0, 7, 21])
 self.b = sp.step(self.b_v(), self.b_t())
 ```
+The initialization dictionary for this model would then specify lists for the values of *b_v* and *b_t*.
 
-If we create an Excel initialization file for this model, we will now see two vector inputs for the parameters *b_v* and *b_t*, so we can edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this case. More values and times can be added to the initialization Excel file as needed, so long as there is always a corresponding time for each value.
+```Python
+init_mod = {'S':95, 'I':5, 'R':0, 'b_v':[0.2, 0.13, 0.2], 'b_t':[0, 7, 21], 'g':0.1}
+```
+
+If we create an Excel initialization file for this model, we will see two vector inputs for the parameters *b_v* and *b_t*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126209560-0027f6d4-5b18-4a6f-bd08-062a64975d36.png)
 
+Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
 <!--
 # Vectorization
