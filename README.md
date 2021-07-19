@@ -307,12 +307,12 @@ self.x = sp.step([0,1,20], [0, 50, 100])
 The first parameter in the step class is a list of values, and the second parameter is a list of times at which the corresponding value will be applied and held. We can see what this does by building a minimal model, running it and plotting it.
 
 ```Python
-class simple_sir(sp.model):
+class simple_step(sp.model):
     def _build(self):
         self.x = sp.step([0,1,2], [0, 50, 100])
         self._set_output('x')
 
-m4 = simple_sir()
+m4 = simple_step()
 
 mgr.run(m4, duration=150, label='step')
 
