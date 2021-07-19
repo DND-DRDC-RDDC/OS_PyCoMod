@@ -13,7 +13,7 @@ The primary developers and contributors to this work are:
 
 SIRplus is composed of a set of Python classes:
  1. model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
- 1. users define a custom model class that contains these elements as well as nested sub-models;
+ 1. a model class that contains these elements as well as nested sub-models;
  1. a run manager class is used to keep track of various models, initial conditions and saved output; and
  1. a plotter class is used for visualizing the results of model runs.
 
