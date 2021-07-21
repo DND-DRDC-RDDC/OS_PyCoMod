@@ -375,6 +375,14 @@ Whichever method is used, we can now edit the timing and magnitude of changes to
 
 <!--
 # Vectorization
+
+# Init flows
+
+# Priority flows
+
+# Impulse
+
+# Execution order
 -->
 
 
