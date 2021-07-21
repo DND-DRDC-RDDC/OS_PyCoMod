@@ -386,15 +386,68 @@ The above code produces an elevated transmission rate of 0.5 on day 10, 25 and 4
 The same approach can be used as described above to edit these values using an initialization dictionary or Excel file.
 
 
+# Initial flows
+
+In some cases, it may be useful to incorporate flows into establishing the initial state of the system. For example, we may not know that there are exactly 5 initial infections in the population, as in the preceding examples. Instead, we may only know that there is a 5% chance that any given person is infected, based on some larger population statistics. To model this situation, we can place the entire population in the S compartment, and use a stochastic initial flow to move a random number of them to the infectious compartment based on the 5% probability.
+
+```Python
+class mc_sir2(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool(100)
+        self.I = sp.pool(0)
+        self.R = sp.pool(0)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #output
+        self._set_output('S','I','R')
+
+m5 = mc_sir2()
+```
+
+In the above code, note that the S pool is initialized to contain the whole population, and I and R are empty. Toward the end of the model definition, we have added a parameter *Pi*, for the 5% probability of initial infection, and the initial flow *Fsi_init*. This flow uses a binomial RNG to move a random number of individuals from S to I using the probability *Pi*, and we set the optional *init* parameter to *True* to declare this to be an initial flow. This flow will now only be executed once at the start of each run.
+
+If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
+
+```Python
+mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
+
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
+
+
+
 
 <!--
-# Vectorization
-
-# Init flows
-
 # Priority flows
 
-# Impulse
+# Vectorization
 
 # Execution order
 -->
