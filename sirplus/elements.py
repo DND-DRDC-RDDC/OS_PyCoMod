@@ -212,13 +212,13 @@ class equation(building_block):
     self.value = self.eq_func()
 
 class step(equation):
-  def __init__(self, values, times):
+  def __init__(self, values, times, default=0):
     
     #define the step function
     def eq_func(t=0):
       idx = len([x for x in times if x <= t]) - 1
       if idx < 0:
-        return values[0]
+        return default
       else:
         return values[idx]
       
@@ -229,7 +229,7 @@ class step(equation):
     
     
 class impulse(equation):
-  def __init__(self, values, times):
+  def __init__(self, values, times, default=0):
     
     #define the impulse function
     def eq_func(t=0, dt=1):
@@ -237,8 +237,12 @@ class impulse(equation):
       #impulse times x where t-dt < x <= t
       y = [1 if x > t-dt and x <= t else 0 for x in times]
       
-      #return sum of impulse values that fall within the t-dt and t
-      return sum(i*j for i,j in zip(values,y))
+      #if no impulse values fall within t-dt and t, return default
+      if 1 not in y:
+        return default
+      #else return sum of impulse values that fall within the t-dt and t
+      else:
+        return sum(i*j for i,j in zip(values,y))
       
     super().__init__(eq_func)
     
