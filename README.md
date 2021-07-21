@@ -373,6 +373,20 @@ If we create an Excel initialization file for this model, we will see two vector
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
+The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the value is held only for the timestep that contains the target time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model may be 0.2 under normal circumstances, but on certain dates there are scheduled events that are expected to result in elevated transmission.
+
+```Python
+self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
+```
+
+The above code produces an elevated transmission rate of 0.5 on day 10, 25 and 45, but is otherwise the nominal rate of 0.2.
+
+![image](https://user-images.githubusercontent.com/86741975/126553442-feb00813-bec3-44f7-a5f2-fbbbef562e5a.png)
+
+The same approach can be used as described above to edit these values using an initialization dictionary or Excel file.
+
+
+
 <!--
 # Vectorization
 
