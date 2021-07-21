@@ -43,7 +43,7 @@ The susceptible-infectious-recovered (SIR) model of disease spread consists of t
 
 The flow of individuals from S to I is given by the rate
 
-<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bI\frac{S}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bS\frac{I}{N}">
 
 where *b* is the transmission rate and *N* is the total population, <img src="https://render.githubusercontent.com/render/math?math=S%2BI%2BR">.
 
@@ -55,13 +55,13 @@ where *g* is the recovery rate.
 
 This produces the following system of differential equations:
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bI\frac{S}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bS\frac{I}{N}">
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bI\frac{S}{N}-gI">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bS\frac{I}{N}-gI">
 
 <img src="https://render.githubusercontent.com/render/math?math=\frac{dR}{dt}=gI">
 
-If we have a population of 100 with 5 initial cases of infection and the remaining 95 being susceptible, we can model this system in SIRplus with the following code:
+Given a population of size 100, where 5 individuals are infected (I) and the remaining 95 individuals are susceptible (S), we can model this system in SIRplus with the following code:
 
 ```python
 class simple_sir(sp.model):
@@ -79,14 +79,14 @@ class simple_sir(sp.model):
     self.g = sp.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
+    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
     self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'I', 'R')
 ```
 
-The first two lines above begin the definition of a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of the model. In this case, we create the three compartments using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first two lines begin the definition of a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of this model. In this case, we create the three compartments (S,I,R) using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
 Having defined the *simple_sir* model class, we can now create an instance of it.
 
@@ -372,20 +372,6 @@ If we create an Excel initialization file for this model, we will see two vector
 ![image](https://user-images.githubusercontent.com/86741975/126209560-0027f6d4-5b18-4a6f-bd08-062a64975d36.png)
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
-
-The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the value is held only for the timestep that contains the target time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model may be 0.2 under normal circumstances, but on certain dates there are scheduled events that are expected to result in elevated transmission.
-
-```Python
-self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
-```
-
-The above code produces an elevated transmission rate of 0.5 on day 10, 25 and 45, but is otherwise the nominal rate of 0.2.
-
-![image](https://user-images.githubusercontent.com/86741975/126553442-feb00813-bec3-44f7-a5f2-fbbbef562e5a.png)
-
-The same approach can be used as described above to edit these values using an initialization dictionary or Excel file.
-
-
 
 <!--
 # Vectorization
