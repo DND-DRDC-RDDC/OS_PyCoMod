@@ -342,17 +342,17 @@ plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. This is possible to implement as a SIRplus equation, but it is not trivial. For this purpose, SIRplus includes an equation sub-class called *step*. For example, we might want to increase or decrease the transmission rate at certain times, reflecting specific measures coming into and out of force.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
 
 ```Python
 self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
 ```
 
-This step equation will produce an initial transmission rate of 0.2, reduce this to 0.13 at time 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
+When initializing the SIRplus *step* object, we provide a list of values and a corresponding list of times. In this case, the transmission rate is initially 0.2 at time 0, it then reduces to to 0.13 on day 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
-In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
 
 In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
@@ -373,17 +373,17 @@ If we create an Excel initialization file for this model, we will see two vector
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
-The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the value is held only for the timestep that contains the target time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model may be 0.2 under normal circumstances, but on certain dates there are scheduled events that are expected to result in elevated transmission.
+The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
 
 ```Python
 self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
 ```
 
-The above code produces an elevated transmission rate of 0.5 on day 10, 25 and 45, but is otherwise the nominal rate of 0.2.
+When initializing a SIRplus *impulse* object, we provide a list of impulse values, a list of impulse times, and an optional default value. In this case, it produces an elevated transmission rate of 0.5 on days 10, 25 and 45, but it otherwise produces the nominal rate of 0.2.
 
 ![image](https://user-images.githubusercontent.com/86741975/126553442-feb00813-bec3-44f7-a5f2-fbbbef562e5a.png)
 
-The same approach can be used as described above to edit these values using an initialization dictionary or Excel file.
+The same approach as described above can be used to set these values using an initialization dictionary or Excel file.
 
 
 # Initial flows
@@ -425,7 +425,7 @@ class mc_sir2(sp.model):
 m5 = mc_sir2()
 ```
 
-In the above code, note that the S pool is initialized to contain the whole population, and I and R are empty. Toward the end of the model definition, we have added a parameter *Pi*, for the 5% probability of initial infection, and the initial flow *Fsi_init*. This flow uses a binomial RNG to move a random number of individuals from S to I using the probability *Pi*, and we set the optional *init* parameter to *True* to declare this to be an initial flow. This flow will now only be executed once at the start of each run.
+In the above code, note that the S pool is initialized to contain the whole population, and I and R are empty. Toward the end of the model definition, we have added a parameter *Pi*, for the 5% probability of initial infection, and the initial flow *Fsi_init*. This flow uses a binomial RNG to move a random number of individuals from S to I using the probability *Pi*. To flag this flow as an initial flow, we set the optional *init* parameter to *True*. This flow will now only be executed once at the start of each run.
 
 If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
 
@@ -442,10 +442,11 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 ![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
 
 
-
-
 <!--
 # Priority flows
+
+In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For examle...
+
 
 # Vectorization
 
