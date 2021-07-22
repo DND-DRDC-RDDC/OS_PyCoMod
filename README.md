@@ -443,14 +443,18 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 
 
 <!--
-# Priority flows
-
-In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For examle...
-
-
 # Vectorization
 
+
 # Execution order
+
+
+# Common pitfalls
+
+In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
+
+Multinomial distribution as alternate fix.
+
 -->
 
 
