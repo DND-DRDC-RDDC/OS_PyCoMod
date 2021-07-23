@@ -14,7 +14,7 @@ The primary developers and contributors to this work are:
 SIRplus is composed of a set of Python classes:
  - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  - a model class is used to contain these elements as well as nested sub-models;
- - a run manager class is used to keep track of various models, initial conditions and saved output; and
+ - a run manager class is used to keep track of various models, initial conditions, and saved output; and
  - a plotter class is used for visualizing the results of model runs.
 
 Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
@@ -43,7 +43,7 @@ The susceptible-infectious-recovered (SIR) model of disease spread consists of t
 
 The flow of individuals from S to I is given by the rate
 
-<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bI\frac{S}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bS\frac{I}{N}">
 
 where *b* is the transmission rate and *N* is the total population, <img src="https://render.githubusercontent.com/render/math?math=S%2BI%2BR">.
 
@@ -55,13 +55,13 @@ where *g* is the recovery rate.
 
 This produces the following system of differential equations:
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bI\frac{S}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bS\frac{I}{N}">
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bI\frac{S}{N}-gI">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bS\frac{I}{N}-gI">
 
 <img src="https://render.githubusercontent.com/render/math?math=\frac{dR}{dt}=gI">
 
-If we have a population of 100 with 5 initial cases of infection and the remaining 95 being susceptible, we can model this system in SIRplus with the following code:
+Given a population of size 100, where 5 individuals are infected (I) and the remaining 95 individuals are susceptible (S), we can model this system in SIRplus with the following code:
 
 ```python
 class simple_sir(sp.model):
@@ -79,16 +79,16 @@ class simple_sir(sp.model):
     self.g = sp.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
+    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
     self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'I', 'R')
 ```
 
-The first two lines above begin the definition of a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of the model. In this case, we create the three compartments using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first two lines begin the definition of a custom class inheriting properties from the SIRplus *model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using sirplus *pools* and specify the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements; lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *()*; for example, the current number of susceptible individuals is obtained by *self.S()*. Using sirplus *parameters* we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using sirplus *flows*; flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
-Having defined the *simple_sir* model class, we can now create an instance of it.
+Having defined the *simple_sir* model class, we can now create an instance of it and call it *m*.
 
 ```Python
 m = simple_sir()
@@ -100,7 +100,7 @@ We use another SIRplus object called a *run_manager* to run it. The run manager 
 mgr = sp.run_manager()
 ```
 
-Now we can tell the run manager to run the simple_SIR model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
+Now we can tell the run manager to run the *simple_sir* model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
 
 ```Python
 mgr.run(m, duration=150, label='My run')
