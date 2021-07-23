@@ -14,7 +14,7 @@ The primary developers and contributors to this work are:
 SIRplus is composed of a set of Python classes:
  - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  - a model class is used to contain these elements as well as nested sub-models;
- - a run manager class is used to keep track of various models, initial conditions, and saved output; and
+ - a run manager class is used to keep track of various models, initial conditions and saved output; and
  - a plotter class is used for visualizing the results of model runs.
 
 Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
@@ -43,7 +43,7 @@ The susceptible-infectious-recovered (SIR) model of disease spread consists of t
 
 The flow of individuals from S to I is given by the rate
 
-<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bS\frac{I}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=F_{si}=bI\frac{S}{N}">
 
 where *b* is the transmission rate and *N* is the total population, <img src="https://render.githubusercontent.com/render/math?math=S%2BI%2BR">.
 
@@ -55,13 +55,13 @@ where *g* is the recovery rate.
 
 This produces the following system of differential equations:
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bS\frac{I}{N}">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dS}{dt}=-bI\frac{S}{N}">
 
-<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bS\frac{I}{N}-gI">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{dI}{dt}=bI\frac{S}{N}-gI">
 
 <img src="https://render.githubusercontent.com/render/math?math=\frac{dR}{dt}=gI">
 
-Given a population of size 100, where 5 individuals are infected (I) and the remaining 95 individuals are susceptible (S), we can model this system in SIRplus with the following code:
+If we have a population of 100 with 5 initial cases of infection and the remaining 95 being susceptible, we can model this system in SIRplus with the following code:
 
 ```python
 class simple_sir(sp.model):
@@ -79,16 +79,16 @@ class simple_sir(sp.model):
     self.g = sp.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
+    self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
     self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'I', 'R')
 ```
 
-The first two lines begin the definition of a custom class inheriting properties from the SIRplus *model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using sirplus *pools* and specify the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements; lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by *self.S()*. Using sirplus *parameters* we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using sirplus *flows*; flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first two lines above begin the definition of a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of the model. In this case, we create the three compartments using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
-Having defined the *simple_sir* model class, we can now create an instance of it, let's call it *m*.
+Having defined the *simple_sir* model class, we can now create an instance of it.
 
 ```Python
 m = simple_sir()
@@ -100,7 +100,7 @@ We use another SIRplus object called a *run_manager* to run it. The run manager 
 mgr = sp.run_manager()
 ```
 
-Now we can tell the run manager to run the *simple_sir* model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
+Now we can tell the run manager to run the simple_SIR model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
 
 ```Python
 mgr.run(m, duration=150, label='My run')
@@ -162,9 +162,9 @@ m2 = mc_sir()
 
 The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a SIRplus *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
 
-The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of remaining susceptible or being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population: *rng.binomial(self.S(), self.b()*self.I()/self.N())*. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering (or not) in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
+The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
 
-Lastly, we create an instance of the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
+Finally, we create an instance of the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
 
 We can now run the model in Monte Carlo mode using the run manager's *run_mc* function, passing the number of replications (reps) in the run settings, and giving the run a new label.
 
@@ -442,9 +442,112 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 ![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
 
 
-<!--
-# Vectorization
 
+# Vectorization
+In SIRplus, the values held by model elements can be vectors. As with vector parameters introduced previously, all vectors can be initialized with a list of values and are stored internally as [numpy](https://numpy.org/) arrays. This means that many mathemetical operations are seemlessly compatible with vector values. Numpy's RNG functions are also compatible with vector input. In many cases a model developed for scalar values will be compatible with vector values with little or no changes. This feature is useful for modelling multiple isolated or semi-isolated populations in parallel, such as a training setting in which students are divided into parallel cohorts. Note that a familiarity with how [numpy](https://numpy.org/) handles vectors in mathematical expressions is necessary to build vectorized models.
+
+For example, we can vectorize the *mc_sir2* model from the previous section simply by changing the pool initial values to lists. In this case, the susceptible population is initialized to 10 cohorts of 10 people, and the infectious and recovered populations are initialized to 10 empty cohorts each. Note that the S, I and R pools must all have the same number of cohorts. The rest of model implicitly accomodates the vectorized populations. So rather than a single SIR model of 100 people, we have 10 parallel SIR models of 10 people each.
+
+```Python
+class vec_sir(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool([10]*10)
+        self.I = sp.pool([0]*10)
+        self.R = sp.pool([0]*10)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #output
+        self._set_output('S','I','R')
+
+m6 = vec_sir()
+```
+
+If we plot the result, we can see the protective effect of dividing the population into isolated cohorts. Note that when we plot a model output that is vectorized, the sum of the vector is shown on the figure.
+
+```Python
+mgr.run_mc(m6, duration=150, reps=100, label='My run - vec')
+
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - vec'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - vec'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - vec'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - vec'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/126799974-76c533de-726e-4569-9e7b-e32c3717a3ac.png)
+
+However, it is usually not realistic to assume that populations are perfectly isolated, so we can introduce a potential for spread between cohorts. At the end of the model definition, we add the parameter *b_mix* which is the smaller rate of transmission between cohorts (one tenth the nominal transmission rate within cohorts), and we add the flow *Fsi_mix* which creates new infections within each cohort as a result of mixing between cohorts. When a susceptible person is in a mixed setting (e.g. a hallway where cohorts share the same space), the probability that they encounter an infectious person is given by the total proportion of infectious people, hense the modified term *self.I().sum()/self.N().sum()* appears in the flow equation. The addition of *.sum()* returns the sum of the vector, in other words, the sum across the cohorts.
+
+```Python
+class vec_sir(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool([10]*10)
+        self.I = sp.pool([0]*10)
+        self.R = sp.pool([0]*10)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #mixing
+        self.b_mix = sp.parameter(0.02)
+        self.Fsi_mix = sp.flow(lambda: rng.binomial(self.S(), self.b_mix()*self.I().sum()/self.N().sum()), src=self.S, dest=self.I)
+
+        #output
+        self._set_output('S','I','R')
+
+m6 = vec_sir()
+```
+
+If we plot the output, we can the effect of the limited degree of mixing between cohorts.
+
+![image](https://user-images.githubusercontent.com/86741975/126808083-e8e14f63-fb70-4954-b5c4-a2ae71675b49.png)
+
+
+
+
+
+
+<!--
 
 # Execution order
 
