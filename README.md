@@ -14,7 +14,7 @@ The primary developers and contributors to this work are:
 SIRplus is composed of a set of Python classes:
  - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  - a model class is used to contain these elements as well as nested sub-models;
- - a run manager class is used to keep track of various models, initial conditions and saved output; and
+ - a run manager class is used to keep track of various models, initial conditions, and saved output; and
  - a plotter class is used for visualizing the results of model runs.
 
 Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
@@ -86,9 +86,9 @@ class simple_sir(sp.model):
     self._set_output('S', 'I', 'R')
 ```
 
-The first two lines begin the definition of a custom class inheriting from the SIRplus *model* class and override the model's *_build* function to define the elements of this model. In this case, we create the three compartments (S,I,R) using sirplus *pools*, specifying the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements. Lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object (add open and close-brackets). For example, the current number of susceptible individuals is obtained by *self.S()*. We then create the transmission rate, *b*, and recovery rate, *g*, using sirplus *parameters*, and specify their values. Next, we define the movement between the compartments using sirplus *flows*. Flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. *src=self.S*, not *src=self.S()*). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first two lines begin the definition of a custom class inheriting properties from the SIRplus *model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using sirplus *pools* and specify the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements; lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by `self.S()`. Using sirplus *parameters* we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using sirplus *flows*; flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. `src=self.S`, not `src=self.S()`). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
-Having defined the *simple_sir* model class, we can now create an instance of it.
+Having defined the *simple_sir* model class, we can now create an instance of it, let's call it *m*.
 
 ```Python
 m = simple_sir()
@@ -100,7 +100,7 @@ We use another SIRplus object called a *run_manager* to run it. The run manager 
 mgr = sp.run_manager()
 ```
 
-Now we can tell the run manager to run the simple_SIR model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
+Now we can tell the run manager to run the *simple_sir* model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
 
 ```Python
 mgr.run(m, duration=150, label='My run')
@@ -162,9 +162,9 @@ m2 = mc_sir()
 
 The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a SIRplus *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
 
-The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
+The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of remaining susceptible or being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population: `rng.binomial(self.S(), self.b()*self.I()/self.N())`. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering (or not) in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
 
-Finally, we create an instance of the new model. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
+Lastly, we create an instance of the new model and call it *m2*. These modifications produce the same average behavior as the deterministic model, but introduce variability based on the uncertainty in the transmission rate and the randomness of transmission events.
 
 We can now run the model in Monte Carlo mode using the run manager's *run_mc* function, passing the number of replications (reps) in the run settings, and giving the run a new label.
 
@@ -210,9 +210,9 @@ class mix_sir(sp.model):
 m3 = mix_sir()
 ```
 
-In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *mix_sir* model. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list.
+In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *mc_sir* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *mix_sir* model and initialized below. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list: `self._set_output('GrpA','GrpB')`; then all elements of the sub-model will be accessible when plotting.
 
-While GrpA and GrpB are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is usually preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a dictionary. For the *mix_sir* model, above, the initialization dictionary would look something like *init_mix* below.
+While *GrpA* and *GrpB* are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is often preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a Python dictionary. For the *mix_sir* model, above, the initialization dictionary would look something like *init_mix* below.
 
 ```Python
 init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}
@@ -220,9 +220,9 @@ init_GrpB = {'S':30, 'I':0, 'R':0, 'b_m':0.3, 'b_s':0.05, 'g':0.1}
 init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}
 ```
 
-The dictionary keys are the names of the model elements, and the dictionary values are used to initialize the element. The only model elements that accept input are pools, parameters and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, which is *init_GrpA* in this case. Hense, nested models are initialized with equivalently nested dictionaries. In this example, GrpA is given the same initialization values as before while GrpB is a smaller population with a higher mean transmission rate but with no initial infections.
+The dictionary keys are the names of the model elements, and the dictionary values are used to initialize that element. The only model elements that accept input are pools, parameters, and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is a constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, `init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}`. Hence, nested models are initialized with equivalently nested dictionaries. In this example, *GrpA* is given the same initialization values as in the *mc_sir* model while *GrpB* is a smaller population (size 30) with a higher mean transmission rate, but with no initial infections.
 
-The top-level initialization dictionary, *init_mix* in this case, can also contain some special entries to control the run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
+The top-level initialization dictionary, `init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}`, can also contain some special entries to control the model run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
 
 We can then perform a run using the dictionary to initialize the model.
 
@@ -230,7 +230,7 @@ We can then perform a run using the dictionary to initialize the model.
 mgr.run_mc(m3, init=init_mix, label='My run - mix')
 ```
 
-And we can then plot what happens to GrpA.
+And we can then plot what happens to *GrpA*.
 
 ```Python
 plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
@@ -242,7 +242,7 @@ plt.plot_mc(mgr['My run - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', inter
 
 ![image](https://user-images.githubusercontent.com/86741975/125534046-615c52ce-7740-432c-ac19-3d233a9dda32.png)
 
-And GrpB.
+And *GrpB*.
 
 ```Python
 plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
@@ -342,17 +342,17 @@ plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. This is possible to implement as a SIRplus equation, but it is not trivial. For this purpose, SIRplus includes an equation sub-class called *step*. For example, we might want to increase or decrease the transmission rate at certain times, reflecting specific measures coming into and out of force.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
 
 ```Python
 self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
 ```
 
-This step equation will produce an initial transmission rate of 0.2, reduce this to 0.13 at time 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
+When initializing the SIRplus *step* object, we provide a list of values and a corresponding list of times. In this case, the transmission rate is initially 0.2 at time 0, it then reduces to to 0.13 on day 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
-In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would then register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
 
 In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
@@ -373,16 +373,88 @@ If we create an Excel initialization file for this model, we will see two vector
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
+The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
+
+```Python
+self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
+```
+
+When initializing a SIRplus *impulse* object, we provide a list of impulse values, a list of impulse times, and an optional default value. In this case, it produces an elevated transmission rate of 0.5 on days 10, 25 and 45, but it otherwise produces the nominal rate of 0.2.
+
+![image](https://user-images.githubusercontent.com/86741975/126553442-feb00813-bec3-44f7-a5f2-fbbbef562e5a.png)
+
+The same approach as described above can be used to set these values using an initialization dictionary or Excel file.
+
+
+# Initial flows
+
+In some cases, it may be useful to incorporate flows into establishing the initial state of the system. For example, we may not know that there are exactly 5 initial infections in the population, as in the preceding examples. Instead, we may only know that there is a 5% chance that any given person is infected, based on some larger population statistics. To model this situation, we can place the entire population in the S compartment, and use a stochastic initial flow to move a random number of them to the infectious compartment based on the 5% probability.
+
+```Python
+class mc_sir2(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool(100)
+        self.I = sp.pool(0)
+        self.R = sp.pool(0)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #output
+        self._set_output('S','I','R')
+
+m5 = mc_sir2()
+```
+
+In the above code, note that the S pool is initialized to contain the whole population, and I and R are empty. Toward the end of the model definition, we have added a parameter *Pi*, for the 5% probability of initial infection, and the initial flow *Fsi_init*. This flow uses a binomial RNG to move a random number of individuals from S to I using the probability *Pi*. To flag this flow as an initial flow, we set the optional *init* parameter to *True*. This flow will now only be executed once at the start of each run.
+
+If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
+
+```Python
+mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
+
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
+
+
 <!--
 # Vectorization
 
-# Init flows
-
-# Priority flows
-
-# Impulse
 
 # Execution order
+
+
+# Common pitfalls
+
+In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
+
+Multinomial distribution as alternate fix.
+
 -->
 
 
