@@ -40,6 +40,11 @@ The examples that follow were tested in [Google Colab](https://colab.research.go
 ## A simple SIR model example
 
 The susceptible-infectious-recovered (SIR) model of disease spread consists of the three compartments (S, I and R), and two flows that move individuals from susceptible to infectious and from infectious to recovered.
+<p align="center">
+  <img width="200" height="60" src="https://user-images.githubusercontent.com/86330428/127009639-8a043b1c-1730-4f82-8373-8e548b0fe13f.png">
+</p>
+
+
 
 The flow of individuals from S to I is given by the rate
 
@@ -119,6 +124,53 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 ![image](https://user-images.githubusercontent.com/86741975/125519680-4f964905-8c1b-4565-acf9-fac73ea403f4.png)
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
+
+
+## How to add model elements
+To incorporate additional model elemets, such as compartments, parameters, or rates, you need only define the model elements as pool, parameter, or flow respectively. For example, to expand on the SIR model above to incorporate the exposed compartment (E), representing a delay from time of infection to infectiousness, we can generate the SEIR compartment model as follows, where <img src="https://render.githubusercontent.com/render/math?math=a^{-1}"> is the time from E to I: 
+
+```python
+class simple_seir(sp.model):
+  def _build(self):
+    #pools
+    self.S = sp.pool(95)
+    self.E = sp.pool(0)
+    self.I = sp.pool(5)
+    self.R = sp.pool(0)
+    
+    #equations
+    self.N = sp.equation(lambda: self.S() + self.E() + self.I() + self.R())
+    
+    #parameters
+    self.b = sp.parameter(0.2)
+    self.a = sp.parameter(0.1)
+    self.g = sp.parameter(0.1)
+    
+    #flows
+    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
+    self.Fei = sp.flow(lambda: self.a()*self.E(), src=self.E, dest=self.I)
+    self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+    
+    #output
+    self._set_output('S', 'E', 'I', 'R')
+    
+    #define model
+    m = simple_sir()
+    mgr = sp.run_manager()
+    
+    #run model
+    mgr.run(m, duration=150, label='My run')
+    
+    #plot model
+    plt = sp.plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
+    plt.plot(mgr['My run'],'S', color='blue', label = 'S')
+    plt.plot(mgr['My run'],'E', color='red', label = 'E')
+    plt.plot(mgr['My run'],'I', color='orange', label = 'I')
+    plt.plot(mgr['My run'],'R', color='green', label = 'R')
+    plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
+
+```
+
 
 Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
 
@@ -254,7 +306,7 @@ plt.plot_mc(mgr['My run - mix'],'GrpB.S + GrpB.I + GrpB.R', color='black', inter
 
 ![image](https://user-images.githubusercontent.com/86741975/125534082-e84971f1-3436-4dda-b431-31ae293f42ba.png)
 
-Note in the above code that to specify the output we want to plot in a nested model, we use dot-notation to navigate the sub-models. E.g. *GrpB.S* plots the susceptible population within GrpB.
+Note in the above code that to specify the output we want to plot in a nested model, we use dot-notation to navigate the sub-models. E.g. *GrpB.S* plots the susceptible population within *GrpB*.
 
 # Initialization files
 
@@ -264,7 +316,7 @@ Initialization dictionaries are useful when we want to set up the model in Pytho
 m3._write_excel_init('init_mix.xlsx')
 ```
 
-In Google Colab, the initialization file will be written to session storage and can be downloaded. In a local Python environment, the file is written to local storage.
+In Google Colab, the initialization file will be written to the temporary session storage and can be downloaded, modified and re-uploaded. In a local Python environment, the file is written to local storage.
 
 The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the model and each sub-model are contained in individual tabs. In this case, there are three tabs.
 
@@ -283,7 +335,7 @@ The *init* tab also contains the special run control entries which are:
  - *_end* - the simulation end time
  - *_reps* - the number of replications for Monte Carlo runs
 
-Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *init.GrpA* which is the name of the second tab. It should usually not be necessary to change the sheet name entry under a sub-model. In the *init.GrpA* tab we find the inputs for the elements of the GrpA sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
+Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *init.GrpA* which is the name of the second tab. It should not be necessary to change the sheet name entry under a sub-model. In the *init.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
 
