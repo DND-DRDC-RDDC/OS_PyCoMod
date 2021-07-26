@@ -125,6 +125,7 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
 
+Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
 
 ## How to add model elements
 To incorporate additional model elemets, such as compartments, parameters, or rates, you need only define the model elements as pool, parameter, or flow respectively. For example, to expand on the SIR model above to incorporate the exposed compartment (E), representing a delay from time of infection to infectiousness, we can generate the SEIR compartment model as follows, where <img src="https://render.githubusercontent.com/render/math?math=a^{-1}"> is the time from E to I: 
@@ -147,32 +148,30 @@ class simple_seir(sp.model):
     self.g = sp.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
+    self.Fse = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
     self.Fei = sp.flow(lambda: self.a()*self.E(), src=self.E, dest=self.I)
     self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'E', 'I', 'R')
     
-    #define model
-    m = simple_sir()
-    mgr = sp.run_manager()
-    
-    #run model
-    mgr.run(m, duration=150, label='My run')
-    
-    #plot model
-    plt = sp.plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
-    plt.plot(mgr['My run'],'S', color='blue', label = 'S')
-    plt.plot(mgr['My run'],'E', color='red', label = 'E')
-    plt.plot(mgr['My run'],'I', color='orange', label = 'I')
-    plt.plot(mgr['My run'],'R', color='green', label = 'R')
-    plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
+#instantiate model
+m = simple_sir()
+
+#run model
+mgr = sp.run_manager()
+mgr.run(m, duration=150, label='My run')
+
+#plot results
+plt = sp.plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
+plt.plot(mgr['My run'],'S', color='blue', label = 'S')
+plt.plot(mgr['My run'],'E', color='red', label = 'E')
+plt.plot(mgr['My run'],'I', color='orange', label = 'I')
+plt.plot(mgr['My run'],'R', color='green', label = 'R')
+plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 ```
 
-
-Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
 
 ## Stochastic model elements
 
@@ -421,7 +420,7 @@ The initialization dictionary for this model would then specify lists for the va
 ```Python
 init_mod = {'S':95, 'I':5, 'R':0, 'b_v':[0.2, 0.13, 0.2], 'b_t':[0, 7, 21], 'g':0.1}
 ```
-### Dyanamic model parameters in Excel
+
 If we create an Excel initialization file for this model, we will see two vector inputs for the parameters *b_v* and *b_t*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126209560-0027f6d4-5b18-4a6f-bd08-062a64975d36.png)
@@ -484,21 +483,6 @@ m5 = mc_sir2()
 ```
 
 In the above code, note that the S pool is initialized to contain the whole population, and I and R are empty. Toward the end of the model definition, we have added a parameter *Pi*, for the 5% probability of initial infection, and the initial flow *Fsi_init*. This flow uses a binomial RNG to move a random number of individuals from S to I using the probability *Pi*. To flag this flow as an initial flow, we set the optional *init* parameter to *True*. This flow will now only be executed once at the start of each run.
-
-If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
-
-```Python
-mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
-
-plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label = 'Total')
-```
-
-![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
-
 
 If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
 
@@ -610,7 +594,7 @@ class vec_sir(sp.model):
 m6 = vec_sir()
 ```
 
-If we plot the output, we can the effect of the limited degree of mixing between cohorts.
+If we plot the output, we can see the effect of the limited degree of mixing between cohorts.
 
 ![image](https://user-images.githubusercontent.com/86741975/126808083-e8e14f63-fb70-4954-b5c4-a2ae71675b49.png)
 
