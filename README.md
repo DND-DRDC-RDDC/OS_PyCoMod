@@ -394,7 +394,8 @@ plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of effect.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
+
 
 ```Python
 self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
@@ -404,7 +405,11 @@ When initializing the SIRplus *step* object, we provide a list of values and a c
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
-In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model. SIRplus parameters support vector inputs, which is needed in the case of the *step* function where two vectors, values and times, are required. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
+
+In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+
+In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
+
 
 ```Python
 self.b_v = sp.parameter([0.2, 0.13, 0.2])
@@ -423,8 +428,8 @@ If we create an Excel initialization file for this model, we will see two vector
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
-### Dynamic model parameters - Impulse function
-The SIRplus *impluse* is another type of dynamic value similar to *step*. *impulse* generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
+The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
+
 
 ```Python
 self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
@@ -437,9 +442,11 @@ When initializing a SIRplus *impulse* object, we provide a list of impulse value
 The same approach as described above can be used to set these values using an initialization dictionary or Excel file.
 
 
+
 ## Initial flows
 
 In some cases, it may be useful to incorporate flows into establishing the initial state of the system. For example, we may not know that there are exactly 5 initial infections in the population, as in the preceding examples. Instead, we may only know that there is a 5% chance that any given person is infected, based on some larger population statistics. To model this situation, we can place the entire population in the S compartment, and use a stochastic initial flow to move a random number of them to the infectious compartment based on aforementioned 5% probability.
+
 
 ```Python
 class mc_sir2(sp.model):
@@ -493,16 +500,133 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 ![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
 
 
+If we run this model, we can see that the initial state of the system is now uncertain, and there is more variability in the outcome compared to the first *mc_sir* model.
+
+```Python
+mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
+
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
+
+
+# Vectorization
+In SIRplus, the values held by model elements can be vectors. As with vector parameters introduced previously, all vectors can be initialized with a list of values and are stored internally as [numpy](https://numpy.org/) arrays. This means that many mathemetical operations are seemlessly compatible with vector values. Numpy's RNG functions are also compatible with vector input. In many cases a model developed for scalar values will be compatible with vector values with little or no changes. This feature is useful for modelling multiple isolated or semi-isolated populations in parallel, such as a training setting in which students are divided into parallel cohorts. Note that a familiarity with how [numpy](https://numpy.org/) handles vectors in mathematical expressions is necessary to build vectorized models.
+
+For example, we can vectorize the *mc_sir2* model from the previous section simply by changing the pool initial values to lists. In this case, the susceptible population is initialized to 10 cohorts of 10 people, and the infectious and recovered populations are initialized to 10 empty cohorts each. Note that the S, I and R pools must all have the same number of cohorts. The rest of model implicitly accomodates the vectorized populations. So rather than a single SIR model of 100 people, we have 10 parallel SIR models of 10 people each.
+
+```Python
+class vec_sir(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool([10]*10)
+        self.I = sp.pool([0]*10)
+        self.R = sp.pool([0]*10)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #output
+        self._set_output('S','I','R')
+
+m6 = vec_sir()
+```
+
+If we plot the result, we can see the protective effect of dividing the population into isolated cohorts. Note that when we plot a model output that is vectorized, the sum of the vector is shown on the figure.
+
+```Python
+mgr.run_mc(m6, duration=150, reps=100, label='My run - vec')
+
+plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - vec'],'S', color='blue', interval=50, label = 'S')
+plt.plot_mc(mgr['My run - vec'],'I', color='orange', interval=50, label = 'I')
+plt.plot_mc(mgr['My run - vec'],'R', color='green', interval=50, label = 'R')
+plt.plot_mc(mgr['My run - vec'],'S + I + R', color='black', interval=50, label = 'Total')
+```
+
+![image](https://user-images.githubusercontent.com/86741975/126799974-76c533de-726e-4569-9e7b-e32c3717a3ac.png)
+
+However, it is usually not realistic to assume that populations are perfectly isolated, so we can introduce a potential for spread between cohorts. At the end of the model definition, we add the parameter *b_mix* which is the smaller rate of transmission between cohorts (one tenth the nominal transmission rate within cohorts), and we add the flow *Fsi_mix* which creates new infections within each cohort as a result of mixing between cohorts. When a susceptible person is in a mixed setting (e.g. a hallway where cohorts share the same space), the probability that they encounter an infectious person is given by the total proportion of infectious people, hense the modified term *self.I().sum()/self.N().sum()* appears in the flow equation. The addition of *.sum()* returns the sum of the vector, in other words, the sum across the cohorts.
+
+```Python
+class vec_sir(sp.model):
+    def _build(self):
+        #pools
+        self.S = sp.pool([10]*10)
+        self.I = sp.pool([0]*10)
+        self.R = sp.pool([0]*10)
+
+        #equations
+        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        
+        #transmission rate parameters
+        self.b_m = sp.parameter(0.2)
+        self.b_s = sp.parameter(0.05)
+        
+        #transmission rate random sample
+        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+
+        #recovery rate parameter
+        self.g = sp.parameter(0.1)
+        
+        #flows
+        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        
+        #initial flow
+        self.Pi = sp.parameter(0.05)
+        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+
+        #mixing
+        self.b_mix = sp.parameter(0.02)
+        self.Fsi_mix = sp.flow(lambda: rng.binomial(self.S(), self.b_mix()*self.I().sum()/self.N().sum()), src=self.S, dest=self.I)
+
+        #output
+        self._set_output('S','I','R')
+
+m6 = vec_sir()
+```
+
+If we plot the output, we can the effect of the limited degree of mixing between cohorts.
+
+![image](https://user-images.githubusercontent.com/86741975/126808083-e8e14f63-fb70-4954-b5c4-a2ae71675b49.png)
+
+
+
+
+
+
 <!--
-## Vectorization
+
+# Execution order
 
 
-## Execution order
+# Common pitfalls
 
-
-## Common pitfalls
-
-In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on a certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
+In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
 
 Multinomial distribution as alternate fix.
 
