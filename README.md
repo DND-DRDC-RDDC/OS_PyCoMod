@@ -394,7 +394,7 @@ plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of effect.
 
 ```Python
 self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
@@ -404,9 +404,7 @@ When initializing the SIRplus *step* object, we provide a list of values and a c
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
-In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
-
-In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
+In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model. SIRplus parameters support vector inputs, which is needed in the case of the *step* function where two vectors, values and times, are required. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
 ```Python
 self.b_v = sp.parameter([0.2, 0.13, 0.2])
@@ -418,14 +416,15 @@ The initialization dictionary for this model would then specify lists for the va
 ```Python
 init_mod = {'S':95, 'I':5, 'R':0, 'b_v':[0.2, 0.13, 0.2], 'b_t':[0, 7, 21], 'g':0.1}
 ```
-
+## Dyanamic model parameters in Excel
 If we create an Excel initialization file for this model, we will see two vector inputs for the parameters *b_v* and *b_t*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126209560-0027f6d4-5b18-4a6f-bd08-062a64975d36.png)
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
-The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
+## Dynamic model parameters: Impulse
+The SIRplus *impluse* is another type of dynamic value similar to *step*. *impulse* generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
 
 ```Python
 self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
@@ -440,7 +439,7 @@ The same approach as described above can be used to set these values using an in
 
 # Initial flows
 
-In some cases, it may be useful to incorporate flows into establishing the initial state of the system. For example, we may not know that there are exactly 5 initial infections in the population, as in the preceding examples. Instead, we may only know that there is a 5% chance that any given person is infected, based on some larger population statistics. To model this situation, we can place the entire population in the S compartment, and use a stochastic initial flow to move a random number of them to the infectious compartment based on the 5% probability.
+In some cases, it may be useful to incorporate flows into establishing the initial state of the system. For example, we may not know that there are exactly 5 initial infections in the population, as in the preceding examples. Instead, we may only know that there is a 5% chance that any given person is infected, based on some larger population statistics. To model this situation, we can place the entire population in the S compartment, and use a stochastic initial flow to move a random number of them to the infectious compartment based on aforementioned 5% probability.
 
 ```Python
 class mc_sir2(sp.model):
@@ -503,7 +502,7 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 
 # Common pitfalls
 
-In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
+In some cases, compartment models can experience unexpected errors caused by multiple flows exiting the same pool, especially if one or more of the flows is relatively large. For example, imagine that a certain number of people will be vaccinated on a certain date. A very simple way to model this is to add a new flow that moves the specified number of people from S to R on that date. However, it is possible that the sum of the vaccination flow (from S to R) and the regular infection flow (from S to I) will exceed the total population in the susceptible pool. This will cause the S pool to have a negative value, and the total population in I and R will exceed the initial total population in the model.
 
 Multinomial distribution as alternate fix.
 
