@@ -1,5 +1,5 @@
 import pandas as pd
-from sirplus.elements import *
+from pycomod.elements import *
 
 #class for building and running the model
 class model:
