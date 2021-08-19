@@ -1,41 +1,41 @@
-# OS_SIRplus
+# OS_PyCoMod
 
 ## Introduction
 
-SIRplus is a Python package for building and running Susceptible-Infectious-Recovered (SIR) and similar compartment models derived from systems of differential equations.
+PyCoMod is a Python package for building and running compartment models derived from systems of differential equations such as the Susceptible-Infectious-Recovered (SIR)model of infectious diseases.
 
-The project is being released under Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public. SIRplus was developed by scientists in the Centre for Operational Research and Analysis (CORA) within Defence Research and Development Canada (DRDC) in order to model the spread of COVID-19 in specific populations of interest to the Canadian Armed Forces.
+The project is being released under Open Science (OS), an initiative of the Government of Canada to make the research products of federal scientists open to the public. PyCoMod was developed by scientists in the Centre for Operational Research and Analysis (CORA) within Defence Research and Development Canada (DRDC) in order to model the spread of COVID-19 in specific populations of interest to the Canadian Armed Forces.
 
 The primary developers and contributors to this work are:
  - Mr. Stephen Okazawa
  - Ms. Josée van den Hoogen
  - Dr. Steve Guillouzic
 
-SIRplus is composed of a set of Python classes:
+PyCoMod is composed of a set of Python classes:
  - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  - a model class is used to contain these elements as well as nested sub-models;
  - a run manager class is used to keep track of various models, initial conditions, and saved output; and
  - a plotter class is used for visualizing the results of model runs.
 
-Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. SIRplus also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
+Internally, the package implements a numerical differential equation solver to solve the system of equations in discrete time-steps and to generate time series output for the state of the system. PyCoMod also allows discrete stochastic flow equations to be created, and the model can be automatically run repeatedly to conduct Monte Carlo simulations and plot the distribution of model outputs.
 
 ## Installation
 
-To install SIRplus to your local Python environment (requires Git version control system), run the following from the command line:
+To install PyCoMod to your local Python environment (requires Git version control system), run the following from the command line:
 
     pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
 
-To install SIRplus in [Google Colab](https://colab.research.google.com), run the following in a code cell:
+To install PyCoMod in [Google Colab](https://colab.research.google.com), run the following in a code cell:
 
     ! pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
 
-After installing the package, import SIRplus into your code.
+After installing the package, import PyCoMod into your code.
 
 ```Python
-import sirplus as sp
+import pycomod as pcm
 ```
 
-The examples that follow were tested in [Google Colab](https://colab.research.google.com) and assume that SIRplus has been installed and imported as above using the abreviated name *sp*.
+The examples that follow were tested in [Google Colab](https://colab.research.google.com) and assume that PyCoMod has been installed and imported as above using the abreviated name *pcm*.
 
 ## A simple SIR model example
 
