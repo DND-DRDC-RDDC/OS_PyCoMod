@@ -23,11 +23,11 @@ Internally, the package implements a numerical differential equation solver to s
 
 To install PyCoMod to your local Python environment (requires Git version control system), run the following from the command line:
 
-    pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
+    pip install git+https://github.com/DND-DRDC-RDDC/OS_PyCoMod.git
 
 To install PyCoMod in [Google Colab](https://colab.research.google.com), run the following in a code cell:
 
-    ! pip install git+https://github.com/DND-DRDC-RDDC/OS_SIRplus.git
+    ! pip install git+https://github.com/DND-DRDC-RDDC/OS_PyCoMod.git
 
 After installing the package, import PyCoMod into your code.
 
@@ -66,32 +66,32 @@ This produces the following system of differential equations:
 
 <img src="https://render.githubusercontent.com/render/math?math=\frac{dR}{dt}=gI">
 
-Given a population of size 100, where 5 individuals are infected (I) and the remaining 95 individuals are susceptible (S), we can model this system in SIRplus with the following code:
+Given a population of size 100, where 5 individuals are infected (I) and the remaining 95 individuals are susceptible (S), we can model this system in PyCoMod with the following code:
 
 ```python
-class simple_sir(sp.model):
+class simple_sir(pcm.model):
   def _build(self):
     #pools
-    self.S = sp.pool(95)
-    self.I = sp.pool(5)
-    self.R = sp.pool(0)
+    self.S = pcm.pool(95)
+    self.I = pcm.pool(5)
+    self.R = pcm.pool(0)
     
     #equations
-    self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+    self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
     
     #parameters
-    self.b = sp.parameter(0.2)
-    self.g = sp.parameter(0.1)
+    self.b = pcm.parameter(0.2)
+    self.g = pcm.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
-    self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+    self.Fsi = pcm.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
+    self.Fir = pcm.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'I', 'R')
 ```
 
-The first two lines begin the definition of a custom class inheriting properties from the SIRplus *model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using sirplus *pools* and specify the initial value of each pool. We define the value *N* (the total population) as a sirplus *equation*. Equations are defined by a function referencing other model elements; lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by `self.S()`. Using sirplus *parameters* we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using sirplus *flows*; flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. `src=self.S`, not `src=self.S()`). A final step in specifying the model is to let SIRplus know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
+The first two lines begin the definition of a custom class inheriting properties from the PyCoMod *model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using PyCoMod *pools* and specify the initial value of each pool. We define the value *N* (the total population) as a PyCoMod *equation*. Equations are defined by a function referencing other model elements; lamda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by `self.S()`. Using PyCoMod *parameters* we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using PyCoMod *flows*; flows are defined by a function, similar to the equation class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. `src=self.S`, not `src=self.S()`). A final step in specifying the model is to let PyCoMod know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* function and providing the names of the model elements that we want to track.
 
 Having defined the *simple_sir* model class, we can now create an instance of it, let's call it *m*.
 
@@ -99,10 +99,10 @@ Having defined the *simple_sir* model class, we can now create an instance of it
 m = simple_sir()
 ```
 
-We use another SIRplus object called a *run_manager* to run it. The run manager keeps track of multiple models, run settings and output so that batches of runs can be automated. First we create an instance of the run manager.
+We use another PyCoMod object called a *run_manager* to run it. The run manager keeps track of multiple models, run settings and output so that batches of runs can be automated. First we create an instance of the run manager.
 
 ```Python
-mgr = sp.run_manager()
+mgr = pcm.run_manager()
 ```
 
 Now we can tell the run manager to run the *simple_sir* model. We can supply run settings (such as the duration in this example), and we must provide a label as a key to access the run results later.
@@ -111,10 +111,10 @@ Now we can tell the run manager to run the *simple_sir* model. We can supply run
 mgr.run(m, duration=150, label='My run')
 ```
 
-Finally, we can plot the results of the run using the SIRplus *plotter*.  First we create an instance of the plotter, which creates a Matplotlib Figure, and then we can plot outputs from the run on the figure axes.
+Finally, we can plot the results of the run using the PyCoMod *plotter*.  First we create an instance of the plotter, which creates a Matplotlib Figure, and then we can plot outputs from the run on the figure axes.
 
 ```Python
-plt = sp.plotter(title='SIR Time Series', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series', ylabel='Population', fontsize=14)
 plt.plot(mgr['My run'],'S', color='blue', label = 'S')
 plt.plot(mgr['My run'],'I', color='orange', label = 'I')
 plt.plot(mgr['My run'],'R', color='green', label = 'R')
@@ -125,32 +125,32 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 Each call to the plotter's *plot* function must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
 
-Note that the examples that follow are meant to provide simple demonstrations of the features of SIRplus; they are not necessarily appropriate models for real situations.
+Note that the examples that follow are meant to provide simple demonstrations of the features of PyCoMod; they are not necessarily appropriate models for real situations.
 
 ## How to add model elements
 To incorporate additional model elemets, such as compartments, parameters, or rates, you need only define the model elements as pool, parameter, or flow respectively. For example, to expand on the SIR model above to incorporate the exposed compartment (E), representing a delay from time of infection to infectiousness, we can generate the SEIR compartment model as follows, where <img src="https://render.githubusercontent.com/render/math?math=a^{-1}"> is the time from E to I: 
 
 ```python
-class simple_seir(sp.model):
+class simple_seir(pcm.model):
   def _build(self):
     #pools
-    self.S = sp.pool(95)
-    self.E = sp.pool(0)
-    self.I = sp.pool(5)
-    self.R = sp.pool(0)
+    self.S = pcm.pool(95)
+    self.E = pcm.pool(0)
+    self.I = pcm.pool(5)
+    self.R = pcm.pool(0)
     
     #equations
-    self.N = sp.equation(lambda: self.S() + self.E() + self.I() + self.R())
+    self.N = pcm.equation(lambda: self.S() + self.E() + self.I() + self.R())
     
     #parameters
-    self.b = sp.parameter(0.2)
-    self.a = sp.parameter(0.1)
-    self.g = sp.parameter(0.1)
+    self.b = pcm.parameter(0.2)
+    self.a = pcm.parameter(0.1)
+    self.g = pcm.parameter(0.1)
     
     #flows
-    self.Fse = sp.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
-    self.Fei = sp.flow(lambda: self.a()*self.E(), src=self.E, dest=self.I)
-    self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+    self.Fse = pcm.flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
+    self.Fei = pcm.flow(lambda: self.a()*self.E(), src=self.E, dest=self.I)
+    self.Fir = pcm.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'E', 'I', 'R')
@@ -159,11 +159,11 @@ class simple_seir(sp.model):
 m = simple_sir()
 
 #run model
-mgr = sp.run_manager()
+mgr = pcm.run_manager()
 mgr.run(m, duration=150, label='My run')
 
 #plot results
-plt = sp.plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
 plt.plot(mgr['My run'],'S', color='blue', label = 'S')
 plt.plot(mgr['My run'],'E', color='red', label = 'E')
 plt.plot(mgr['My run'],'I', color='orange', label = 'I')
@@ -175,35 +175,35 @@ plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
 
 ## Stochastic model elements
 
-In SIRplus, we can also introduce stochastic model elements and run Monte Carlo simulations. For example, two improvements to the simple SIR model would be to sample the transmission rate from a distribution reflecting the uncertainty in this parameter, and to make the flows stochastic and discrete. We show these changes below in a new model class called *mc_sir*.
+In PyCoMod, we can also introduce stochastic model elements and run Monte Carlo simulations. For example, two improvements to the simple SIR model would be to sample the transmission rate from a distribution reflecting the uncertainty in this parameter, and to make the flows stochastic and discrete. We show these changes below in a new model class called *mc_sir*.
 
 ```Python
 import numpy as np
 rng = np.random.default_rng()
 
-class mc_sir(sp.model):
+class mc_sir(pcm.model):
     def _build(self):
         #pools
-        self.S = sp.pool(95)
-        self.I = sp.pool(5)
-        self.R = sp.pool(0)
+        self.S = pcm.pool(95)
+        self.I = pcm.pool(5)
+        self.R = pcm.pool(0)
 
         #equations
-        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
         
         #transmission rate parameters
-        self.b_m = sp.parameter(0.2)
-        self.b_s = sp.parameter(0.05)
+        self.b_m = pcm.parameter(0.2)
+        self.b_s = pcm.parameter(0.05)
         
         #transmission rate random sample
-        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+        self.b = pcm.sample(lambda: rng.normal(self.b_m(), self.b_s()))
 
         #recovery rate parameter
-        self.g = sp.parameter(0.1)
+        self.g = pcm.parameter(0.1)
         
         #flows
-        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = pcm.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
 
         #output
         self._set_output('S','I','R')
@@ -211,7 +211,7 @@ class mc_sir(sp.model):
 m2 = mc_sir()
 ```
 
-The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a SIRplus *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
+The first lines, above, import numpy and initialize its random number generator (RNG). We now specify the transmission rate with two parameters, a mean value *b_m* and a standard deviation *b_s*. Then we create the transmission rate *b* as a PyCoMod *sample*, defined by a lambda function that calls numpy's normal RNG, passing *b_m* and *b_s* as parameters. This will resample the transmission rate from the normal distribution at the start of each model run.
 
 The flow *Fsi* has been updated such that, rather than being a deterministic rate, each susceptible person has a probability of remaining susceptible or being infected based on the number of infected people in the population and the transmission rate. Therefore, we use the binomial RNG to generate a discrete, random number of new infections that will move from the susceptible population to the infectious population: `rng.binomial(self.S(), self.b()*self.I()/self.N())`. The flow *Fir* has similarly been updated such that each infected person has a probability of recovering (or not) in each time step, again using the binomial RNG to generate a discrete, random number of people to move from the infectious population to the recovered population.
 
@@ -226,7 +226,7 @@ mgr.run_mc(m2, duration=150, reps=100, label='My run - mc')
 We can plot the results of a Monte Carlo run using the plotter's *plot_mc* function. The optional *interval* parameter specifies the percentile range from the distribution of outputs to be displayed. An interval of 50 means the middle 50% of the distribution, or the inter-quartile range. An interval of 90 would display the region from the 5th to 95th percentile.
 
 ```Python
-plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - mc'],'S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - mc'],'I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - mc'],'R', color='green', interval=50, label = 'R')
@@ -238,10 +238,10 @@ plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 
 
 ## Nested models and model initialization
 
-SIRplus models support nesting, so any SIRplus model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains two instances of the *mc_sir* model defined previously.
+PyCoMod models support nesting, so any PyCoMod model can be used as an element inside another model. For example, if we have two sub-populations with different transmission dynamics and a certain degree of mixing between them, we can create a new model, *mix_sir*, that contains two instances of the *mc_sir* model defined previously.
 
 ```Python
-class mix_sir(sp.model):
+class mix_sir(pcm.model):
     def _build(self):
 
         #sub models
@@ -249,11 +249,11 @@ class mix_sir(sp.model):
         self.GrpB = mc_sir()
 
         #transmission parameter between groups
-        self.b_mix = sp.parameter()
+        self.b_mix = pcm.parameter()
         
         #cross-infection flows
-        self.Fsi_GrpA = sp.flow(lambda: rng.binomial(self.GrpA.S(), self.b_mix()*self.GrpB.I()/self.GrpB.N()), src=self.GrpA.S, dest=self.GrpA.I)
-        self.Fsi_GrpB = sp.flow(lambda: rng.binomial(self.GrpB.S(), self.b_mix()*self.GrpA.I()/self.GrpA.N()), src=self.GrpB.S, dest=self.GrpB.I)
+        self.Fsi_GrpA = pcm.flow(lambda: rng.binomial(self.GrpA.S(), self.b_mix()*self.GrpB.I()/self.GrpB.N()), src=self.GrpA.S, dest=self.GrpA.I)
+        self.Fsi_GrpB = pcm.flow(lambda: rng.binomial(self.GrpB.S(), self.b_mix()*self.GrpA.I()/self.GrpA.N()), src=self.GrpB.S, dest=self.GrpB.I)
         
         #output
         self._set_output('GrpA','GrpB')
@@ -284,7 +284,7 @@ mgr.run_mc(m3, init=init_mix, label='My run - mix')
 And we can then plot what happens to *GrpA*.
 
 ```Python
-plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - mix'],'GrpA.S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - mix'],'GrpA.I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - mix'],'GrpA.R', color='green', interval=50, label = 'R')
@@ -296,7 +296,7 @@ plt.plot_mc(mgr['My run - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', inter
 And *GrpB*.
 
 ```Python
-plt = sp.plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - mix'],'GrpB.S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - mix'],'GrpB.I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - mix'],'GrpB.R', color='green', interval=50, label = 'R')
@@ -309,7 +309,7 @@ Note in the above code that to specify the output we want to plot in a nested mo
 
 ### Initialization files
 
-Initialization dictionaries are useful when we want to set up the model in Python code, but it is often practical to contain the initialization data in a file. This allows different model setups to be saved and edited by hand. For this purpose, SIRplus models can also be initialized from an Excel file. The Excel file template to initialize a particular model can be generated by the model itself by calling *_write_excel_init* and providing a file name.
+Initialization dictionaries are useful when we want to set up the model in Python code, but it is often practical to contain the initialization data in a file. This allows different model setups to be saved and edited by hand. For this purpose, PyCoMod models can also be initialized from an Excel file. The Excel file template to initialize a particular model can be generated by the model itself by calling *_write_excel_init* and providing a file name.
 
 ```Python
 m3._write_excel_init('init_mix.xlsx')
@@ -354,26 +354,26 @@ Viewing the run output is the same as before.
 
 
 ## Dynamic model parameters
-It is often necessary to adjust model parameters over time. In general this can be accomplished using SIRplus equations. For example, we might want to modify the *simple_SIR* model to make the transmission rate decay over time, reflecting increasing adherence to public health measures. So we could replace the parameter *b* with an equation implementing an exponential decay.
+It is often necessary to adjust model parameters over time. In general this can be accomplished using PyCoMod equations. For example, we might want to modify the *simple_SIR* model to make the transmission rate decay over time, reflecting increasing adherence to public health measures. So we could replace the parameter *b* with an equation implementing an exponential decay.
 
 ```Python
-class mod_sir(sp.model):
+class mod_sir(pcm.model):
   def _build(self):
     #pools
-    self.S = sp.pool(95)
-    self.I = sp.pool(5)
-    self.R = sp.pool(0)
+    self.S = pcm.pool(95)
+    self.I = pcm.pool(5)
+    self.R = pcm.pool(0)
     
     #equations
-    self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+    self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
 
     #parameters
-    self.b = sp.equation(lambda: 0.2*(0.98)**self._t())
-    self.g = sp.parameter(0.1)
+    self.b = pcm.equation(lambda: 0.2*(0.98)**self._t())
+    self.g = pcm.parameter(0.1)
     
     #flows
-    self.Fsi = sp.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
-    self.Fir = sp.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+    self.Fsi = pcm.flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
+    self.Fir = pcm.flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
     
     #output
     self._set_output('S', 'I', 'R', 'b')
@@ -386,34 +386,34 @@ Note that the current simulation time can be accessed by calling the special var
 ```Python
 mgr.run(m4, duration=150, label='Mod SIR')
 
-plt = sp.plotter(title='Dynamic transmission rate', ylabel='Value', fontsize=14)
+plt = pcm.plotter(title='Dynamic transmission rate', ylabel='Value', fontsize=14)
 plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
 
 
-Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a SIRplus equation, but this is not trivial. As this is is a common requirement in modelling and simulation, SIRplus provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
+Sometimes we want a parameter to change to specific values at specific times, in other words, a step function. It is possible to implement a step function as a PyCoMod equation, but this is not trivial. As this is is a common requirement in modelling and simulation, PyCoMod provides a built-in equation sub-class called *step*. For example, we can change the *mod_sir* model such that the transmission rate increases and decreases at certain times, reflecting specific measures coming into and out of force.
 
 
 ```Python
-self.b = sp.step([0.2, 0.13, 0.2], [0, 7, 21])
+self.b = pcm.step([0.2, 0.13, 0.2], [0, 7, 21])
 ```
 
-When initializing the SIRplus *step* object, we provide a list of values and a corresponding list of times. In this case, the transmission rate is initially 0.2 at time 0, it then reduces to to 0.13 on day 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in SIRplus is 1 day.
+When initializing the PyCoMod *step* object, we provide a list of values and a corresponding list of times. In this case, the transmission rate is initially 0.2 at time 0, it then reduces to to 0.13 on day 7 for a period of two weeks, after which it returns to 0.2. Note that the default time unit in PyCoMod is 1 day.
 
 ![image](https://user-images.githubusercontent.com/86741975/126210132-60da1f39-f562-494c-8282-a25a3783157e.png)
 
 
-In the above examples, the numerical constants used to define *b* could be replaced with SIRplus parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
+In the above examples, the numerical constants used to define *b* could be replaced with PyCoMod parameters which would register them as model inputs allowing them to be adjusted via an initialization dictionary or initialization file. This is the advantage of using parameters rather than literals in a model.
 
-In the case of the *step* function, we need two vectors, and SIRplus parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
+In the case of the *step* function, we need two vectors, and PyCoMod parameters support vector inputs. So we can create a parameter *b_v* for the values of the transmission rate, and a parameter *b_t* for the times at which they will be applied.
 
 
 ```Python
-self.b_v = sp.parameter([0.2, 0.13, 0.2])
-self.b_t = sp.parameter([0, 7, 21])
-self.b = sp.step(self.b_v(), self.b_t())
+self.b_v = pcm.parameter([0.2, 0.13, 0.2])
+self.b_t = pcm.parameter([0, 7, 21])
+self.b = pcm.step(self.b_v(), self.b_t())
 ```
 The initialization dictionary for this model would then specify lists for the values of *b_v* and *b_t*.
 
@@ -427,14 +427,14 @@ If we create an Excel initialization file for this model, we will see two vector
 
 Whichever method is used, we can now edit the timing and magnitude of changes to the transmission rate. The size of the vector is not restricted to the initial dimension of three in this example. More values and times can be added so long as there is always a corresponding time for each value.
 
-The SIRplus *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
+The PyCoMod *impluse* is another type of dynamic value similar to *step*. Impulse generates specified values at specified times, but only at those times. In other words the impulse value is held only for the timestep that contains the impulse time, otherwise it returns 0 or an optional default value. For example, the transmission rate in our model could be 0.2 under normal circumstances, but on certain dates there may be events that are expected to result in elevated transmission.
 
 
 ```Python
-self.b = sp.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
+self.b = pcm.impulse([0.5, 0.5, 0.5], [10, 25, 45], 0.2)
 ```
 
-When initializing a SIRplus *impulse* object, we provide a list of impulse values, a list of impulse times, and an optional default value. In this case, it produces an elevated transmission rate of 0.5 on days 10, 25 and 45, but it otherwise produces the nominal rate of 0.2.
+When initializing a PyCoMod *impulse* object, we provide a list of impulse values, a list of impulse times, and an optional default value. In this case, it produces an elevated transmission rate of 0.5 on days 10, 25 and 45, but it otherwise produces the nominal rate of 0.2.
 
 ![image](https://user-images.githubusercontent.com/86741975/126553442-feb00813-bec3-44f7-a5f2-fbbbef562e5a.png)
 
@@ -448,33 +448,33 @@ In some cases, it may be useful to incorporate flows into establishing the initi
 
 
 ```Python
-class mc_sir2(sp.model):
+class mc_sir2(pcm.model):
     def _build(self):
         #pools
-        self.S = sp.pool(100)
-        self.I = sp.pool(0)
-        self.R = sp.pool(0)
+        self.S = pcm.pool(100)
+        self.I = pcm.pool(0)
+        self.R = pcm.pool(0)
 
         #equations
-        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
         
         #transmission rate parameters
-        self.b_m = sp.parameter(0.2)
-        self.b_s = sp.parameter(0.05)
+        self.b_m = pcm.parameter(0.2)
+        self.b_s = pcm.parameter(0.05)
         
         #transmission rate random sample
-        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+        self.b = pcm.sample(lambda: rng.normal(self.b_m(), self.b_s()))
 
         #recovery rate parameter
-        self.g = sp.parameter(0.1)
+        self.g = pcm.parameter(0.1)
         
         #flows
-        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = pcm.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
         
         #initial flow
-        self.Pi = sp.parameter(0.05)
-        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Pi = pcm.parameter(0.05)
+        self.Fsi_init = pcm.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
 
         #output
         self._set_output('S','I','R')
@@ -489,7 +489,7 @@ If we run this model, we can see that the initial state of the system is now unc
 ```Python
 mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
 
-plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
@@ -500,38 +500,38 @@ plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label =
 
 
 # Vectorization
-In SIRplus, the values held by model elements can be vectors. As with vector parameters introduced previously, all vectors can be initialized with a list of values and are stored internally as [numpy](https://numpy.org/) arrays. This means that many mathemetical operations are seemlessly compatible with vector values. Numpy's RNG functions are also compatible with vector input. In many cases a model developed for scalar values will be compatible with vector values with little or no changes. This feature is useful for modelling multiple isolated or semi-isolated populations in parallel, such as a training setting in which students are divided into parallel cohorts. Note that a familiarity with how [numpy](https://numpy.org/) handles vectors in mathematical expressions is necessary to build vectorized models.
+In PyCoMod, the values held by model elements can be vectors. As with vector parameters introduced previously, all vectors can be initialized with a list of values and are stored internally as [numpy](https://numpy.org/) arrays. This means that many mathemetical operations are seemlessly compatible with vector values. Numpy's RNG functions are also compatible with vector input. In many cases a model developed for scalar values will be compatible with vector values with little or no changes. This feature is useful for modelling multiple isolated or semi-isolated populations in parallel, such as a training setting in which students are divided into parallel cohorts. Note that a familiarity with how [numpy](https://numpy.org/) handles vectors in mathematical expressions is necessary to build vectorized models.
 
 For example, we can vectorize the *mc_sir2* model from the previous section simply by changing the pool initial values to lists. In this case, the susceptible population is initialized to 10 cohorts of 10 people, and the infectious and recovered populations are initialized to 10 empty cohorts each. Note that the S, I and R pools must all have the same number of cohorts. The rest of model implicitly accomodates the vectorized populations. So rather than a single SIR model of 100 people, we have 10 parallel SIR models of 10 people each.
 
 ```Python
-class vec_sir(sp.model):
+class vec_sir(pcm.model):
     def _build(self):
         #pools
-        self.S = sp.pool([10]*10)
-        self.I = sp.pool([0]*10)
-        self.R = sp.pool([0]*10)
+        self.S = pcm.pool([10]*10)
+        self.I = pcm.pool([0]*10)
+        self.R = pcm.pool([0]*10)
 
         #equations
-        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
         
         #transmission rate parameters
-        self.b_m = sp.parameter(0.2)
-        self.b_s = sp.parameter(0.05)
+        self.b_m = pcm.parameter(0.2)
+        self.b_s = pcm.parameter(0.05)
         
         #transmission rate random sample
-        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+        self.b = pcm.sample(lambda: rng.normal(self.b_m(), self.b_s()))
 
         #recovery rate parameter
-        self.g = sp.parameter(0.1)
+        self.g = pcm.parameter(0.1)
         
         #flows
-        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = pcm.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
         
         #initial flow
-        self.Pi = sp.parameter(0.05)
-        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Pi = pcm.parameter(0.05)
+        self.Fsi_init = pcm.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
 
         #output
         self._set_output('S','I','R')
@@ -544,7 +544,7 @@ If we plot the result, we can see the protective effect of dividing the populati
 ```Python
 mgr.run_mc(m6, duration=150, reps=100, label='My run - vec')
 
-plt = sp.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
+plt = pcm.plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
 plt.plot_mc(mgr['My run - vec'],'S', color='blue', interval=50, label = 'S')
 plt.plot_mc(mgr['My run - vec'],'I', color='orange', interval=50, label = 'I')
 plt.plot_mc(mgr['My run - vec'],'R', color='green', interval=50, label = 'R')
@@ -556,37 +556,37 @@ plt.plot_mc(mgr['My run - vec'],'S + I + R', color='black', interval=50, label =
 However, it is usually not realistic to assume that populations are perfectly isolated, so we can introduce a potential for spread between cohorts. At the end of the model definition, we add the parameter *b_mix* which is the smaller rate of transmission between cohorts (one tenth the nominal transmission rate within cohorts), and we add the flow *Fsi_mix* which creates new infections within each cohort as a result of mixing between cohorts. When a susceptible person is in a mixed setting (e.g. a hallway where cohorts share the same space), the probability that they encounter an infectious person is given by the total proportion of infectious people, hense the modified term *self.I().sum()/self.N().sum()* appears in the flow equation. The addition of *.sum()* returns the sum of the vector, in other words, the sum across the cohorts.
 
 ```Python
-class vec_sir(sp.model):
+class vec_sir(pcm.model):
     def _build(self):
         #pools
-        self.S = sp.pool([10]*10)
-        self.I = sp.pool([0]*10)
-        self.R = sp.pool([0]*10)
+        self.S = pcm.pool([10]*10)
+        self.I = pcm.pool([0]*10)
+        self.R = pcm.pool([0]*10)
 
         #equations
-        self.N = sp.equation(lambda: self.S() + self.I() + self.R())
+        self.N = pcm.equation(lambda: self.S() + self.I() + self.R())
         
         #transmission rate parameters
-        self.b_m = sp.parameter(0.2)
-        self.b_s = sp.parameter(0.05)
+        self.b_m = pcm.parameter(0.2)
+        self.b_s = pcm.parameter(0.05)
         
         #transmission rate random sample
-        self.b = sp.sample(lambda: rng.normal(self.b_m(), self.b_s()))
+        self.b = pcm.sample(lambda: rng.normal(self.b_m(), self.b_s()))
 
         #recovery rate parameter
-        self.g = sp.parameter(0.1)
+        self.g = pcm.parameter(0.1)
         
         #flows
-        self.Fsi = sp.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = sp.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
+        self.Fir = pcm.flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
         
         #initial flow
-        self.Pi = sp.parameter(0.05)
-        self.Fsi_init = sp.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Pi = pcm.parameter(0.05)
+        self.Fsi_init = pcm.flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
 
         #mixing
-        self.b_mix = sp.parameter(0.02)
-        self.Fsi_mix = sp.flow(lambda: rng.binomial(self.S(), self.b_mix()*self.I().sum()/self.N().sum()), src=self.S, dest=self.I)
+        self.b_mix = pcm.parameter(0.02)
+        self.Fsi_mix = pcm.flow(lambda: rng.binomial(self.S(), self.b_mix()*self.I().sum()/self.N().sum()), src=self.S, dest=self.I)
 
         #output
         self._set_output('S','I','R')
