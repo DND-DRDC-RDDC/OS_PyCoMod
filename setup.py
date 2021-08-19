@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.1.0' 
-DESCRIPTION = 'SIR compartment modelling framework'
-LONG_DESCRIPTION = 'Framework for creating stochastic SIR-style compartment models and running Monte Carlo simulations.'
+VERSION = '0.2.0' 
+DESCRIPTION = 'Python compartment modelling framework'
+LONG_DESCRIPTION = 'Classes for creating stochastic compartment models and running Monte Carlo simulations.'
 
 # Setting up
 setup(
-        name="sirplus", 
+        name="pycomod", 
         version=VERSION,
         author="Stephen Okazawa",
         author_email="okazawa.s@gmail.com",
