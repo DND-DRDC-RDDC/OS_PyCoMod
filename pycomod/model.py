@@ -1,5 +1,7 @@
+import numpy as np
 import pandas as pd
-from pycomod.elements import *
+from pycomod.elements import (building_block, sim_time, sim_date, run_info,
+                              pool, flow, parameter, sample, equation)
 
 
 # Class for building and running the model
