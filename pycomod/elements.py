@@ -2,7 +2,8 @@ import numpy as np
 import datetime
 
 # Building block class for model elements
-# Handles the initial value, current value, and history of values for the element
+# Handles the initial value, current value, and history of values for the
+# element
 class building_block:
 
     def __init__(self, value=1):
@@ -28,12 +29,14 @@ class building_block:
         # If first pass, append the current value to value_hist
         if passno == 1:
             self.value_hist.append(self.value)
-        # If this is a second or subsequent pass, set last value in value hist (rather than appending)
+        # If this is a second or subsequent pass, set last value in value hist
+        # (rather than appending)
         else:
             self.value_hist[-1] = self.value
 
     # Calling the building block returns its most recent value
-    # Optional idx parameter used to return past values, e.g. Block(-2) returns value from two timesteps ago
+    # Optional idx parameter used to return past values, e.g. Block(-2) returns
+    # value from two timesteps ago
     def __call__(self, idx=-1):
         if idx < 0:
             try:
@@ -41,7 +44,8 @@ class building_block:
             except IndexError:
                 return self.init_value
         else:
-            raise Exception("Index must be negative to reference past value. Can't reference present or future value.")
+            raise Exception("Index must be negative to reference past value. "
+                            "Can't reference present or future value.")
 
     # Get the time series data for this element as a numpy array
     def get_hist(self):
@@ -129,7 +133,8 @@ class pool(building_block):
 
     # Update the value of the pool based on flows affecting the pool
     def update(self):
-        self.value = self.value + self.delta  # Be careful: numpy arrays treat += as self-modifying
+        # Be careful: numpy arrays treat += as self-modifying
+        self.value = self.value + self.delta
 
         # Prevent negative values for pool (this needs more thought)
         self.value = np.maximum(self.value, 0)
@@ -139,11 +144,14 @@ class pool(building_block):
 
 
 
-# Class representing a flow between pools where the rate is a function of other values in the model
-# If the flow equation defines a volume (as in discrete flows), the volume parameter is set to true
+# Class representing a flow between pools where the rate is a function of other
+# values in the model
+# If the flow equation defines a volume (as in discrete flows), the volume
+# parameter is set to true
 class flow(building_block):
     # Constructor
-    def __init__(self, rate_func=lambda:1, src=None, dest=None, priority=False, init=False):
+    def __init__(self, rate_func=lambda:1, src=None, dest=None,
+                 priority=False, init=False):
         super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
@@ -171,7 +179,8 @@ class flow(building_block):
 
 
 # Class representing a model parameter that can change over time
-# IDEA: if parameters can optionally accept a function, this can be called to set the parameter value which would accomplish what random samples do
+# IDEA: if parameters can optionally accept a function, this can be called to
+# set the parameter value which would accomplish what random samples do
 class parameter(building_block):
     # Constructor
     def __init__(self, value=1):
@@ -186,7 +195,8 @@ class parameter(building_block):
 
 
 
-# Class representing a constant that is randomly sampled from a distribution at the start of the simulation
+# Class representing a constant that is randomly sampled from a distribution at
+# the start of the simulation
 class sample(building_block):
     # Constructor
     def __init__(self, sample_func=lambda:1):
@@ -198,7 +208,8 @@ class sample(building_block):
 
 
 
-# Class representing an intermediate equation, e.g. N = S+E+I+R, that can be used in flow equations
+# Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
+# used in flow equations
 class equation(building_block):
     # Constructor
     def __init__(self, eq_func=lambda:1):

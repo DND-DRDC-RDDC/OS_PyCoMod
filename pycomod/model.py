@@ -51,9 +51,11 @@ class model:
 
 
     def _register(self):
-        # Get all attributes that are an instance of biulding_block and organize them into lists
+        # Get all attributes that are an instance of biulding_block and
+        # organize them into lists
 
-        elements = [x for x in self.__dict__.values() if isinstance(x, (building_block, model))]
+        elements = [x for x in self.__dict__.values()
+                    if isinstance(x, (building_block, model))]
 
         for e in elements:
             if isinstance(e, sample):
@@ -74,7 +76,8 @@ class model:
             elif isinstance(e, model):
                 self._models.append(e)
 
-    # Check self and sub-models for priority flows and updates _has_priority flag
+    # Check self and sub-models for priority flows and updates _has_priority
+    # flag
     def _check_priority(self):
         pri = False
         if len(self._priority_flows) > 0:
@@ -114,7 +117,8 @@ class model:
         self._reset()
 
         d = {}
-        elements = [(k,v) for k,v in self.__dict__.items() if isinstance(v, (pool, parameter, model))]
+        elements = [(k,v) for k,v in self.__dict__.items()
+                    if isinstance(v, (pool, parameter, model))]
 
         for k,v in elements:
             if isinstance(v, model):
@@ -140,7 +144,8 @@ class model:
         d[key] = {}
 
         # Add all elements to the dict
-        elements = [(k,v) for k,v in self.__dict__.items() if isinstance(v, (pool, parameter, model))]
+        elements = [(k,v) for k,v in self.__dict__.items()
+                    if isinstance(v, (pool, parameter, model))]
         for k,v in elements:
             if isinstance(v, model):
                 next_key = key + '.' + k
@@ -493,7 +498,8 @@ class model:
 
 
     # Do a run
-    def _run(self, end=None, dt=None, start_time=None, start_date=None, init=None):
+    def _run(self, end=None, dt=None, start_time=None,
+             start_date=None, init=None):
 
         # First apply initial conditions from init dict
         if init is not None:
@@ -555,7 +561,8 @@ class model:
             self._append_output_mc(self._output_mc, self._output)
 
     # Monte carlo runs
-    def _run_mc(self, reps=None, end=None, dt=None, start_time=None, start_date=None, init=None):
+    def _run_mc(self, reps=None, end=None, dt=None,
+                start_time=None, start_date=None, init=None):
         # First apply initial conditions from init dict
         if init is not None:
             self._init_cond(init)

@@ -7,7 +7,8 @@ def read_excel_init(file, sheet=None):
     if type(file) is str:
         file = pd.read_excel(file, None)
 
-    # If sheet is None (first call), get the first sheet, else get the specified sheet
+    # If sheet is None (first call), get the first sheet, else get the
+    # specified sheet
     if sheet is None:
         df = list(file.values())[0]
     else:
@@ -49,7 +50,8 @@ class run_manager:
         return self.runs[key]
 
     # Run a model using init (initial conditions)
-    def _run(self, model, init=None, duration=None, label=None, dt=None, start_date=None, start_time=None, reps=None):
+    def _run(self, model, init=None, duration=None, label=None, dt=None,
+             start_date=None, start_time=None, reps=None):
 
         # If init is a string, assume it is an excel file and try to read it
         if type(init) == str:
@@ -58,11 +60,14 @@ class run_manager:
         # Run info
         model_type = str(type(model)).split('.')[1][:-2]
         init_hash = hash(str(init))
-        timestamp = str(datetime.datetime.now())  # Running in cloud so may not match local time
+        # Running in cloud so may not match local time
+        timestamp = str(datetime.datetime.now())
 
         # Create default label is label is None
         if label is None:
-            label = 'Run model <%s> init hash <%s> at <%s>' % (model_type, init_hash, timestamp)
+            label = 'Run model <%s> init hash <%s> at <%s>' % (model_type,
+                                                               init_hash,
+                                                               timestamp)
 
         # Create run entry
         run_data = {}
@@ -96,10 +101,14 @@ class run_manager:
 
 
     # Execute a run on model once using init (initial conditions)
-    def run(self, model, init=None, duration=None, label=None, dt=None, start_date=None, start_time=None):
-        self._run(model, init, duration, label, dt, start_date, start_time, reps=1)
+    def run(self, model, init=None, duration=None, label=None, dt=None,
+            start_date=None, start_time=None):
+        self._run(model, init, duration, label, dt,
+                  start_date, start_time, reps=1)
 
 
     # Execute a monte-carlo run on model using init (initial conditions)
-    def run_mc(self, model, init=None, duration=None, label=None, dt=None, start_date=None, start_time=None, reps=None):
-        self._run(model, init, duration, label, dt, start_date, start_time, reps)
+    def run_mc(self, model, init=None, duration=None, label=None, dt=None,
+            start_date=None, start_time=None, reps=None):
+        self._run(model, init, duration, label, dt,
+                  start_date, start_time, reps)

@@ -11,7 +11,8 @@ class plotter:
         # Display plots
         mplot.show()
 
-    def __init__(self, figsize=(14,6), fontsize=12, title=None, xlabel=None, ylabel=None, ylimit=None):
+    def __init__(self, figsize=(14,6), fontsize=12, title=None,
+                 xlabel=None, ylabel=None, ylimit=None):
         # Mpl settings
         mplot.rc('font', size=fontsize)
         mplot.rc('figure', figsize=figsize)
@@ -50,8 +51,8 @@ class plotter:
         # Init timeseries data for plotting
         d = np.zeros(len(x))
 
-        # Parse elements
-        elements = elements.replace(' ', '').split('+')  # Remove whitespace and split on +
+        # Parse elements: remove whitespace and split on +
+        elements = elements.replace(' ', '').split('+')
 
         # For each supplied element
         for s in elements:
@@ -108,8 +109,8 @@ class plotter:
         # Init timeseries data for plotting
         d = np.zeros((r,len(x)))
 
-        # Parse elements
-        elements = elements.replace(' ', '').split('+')  # Remove whitespace and split on +
+        # Parse elements: remove whitespace and split on +
+        elements = elements.replace(' ', '').split('+')
 
         # For each supplied element
         for s in elements:
