@@ -6,6 +6,11 @@ months = mdates.MonthLocator()  #for month intervals on plots
 months_fmt = mdates.DateFormatter('%b')
 
 class plotter:
+    @classmethod
+    def show(cls):
+        #display plots
+        mplot.show()
+
     def __init__(self, figsize=(14,6), fontsize=12, title=None, xlabel=None, ylabel=None, ylimit=None):
         #mpl settings
         mplot.rc('font', size=fontsize)
@@ -160,5 +165,4 @@ class plotter:
         self.ax.fill_between(x, pL, pH, alpha=0.33, color=color, linewidth = 0)
 
         self.ax.legend()
-
 
