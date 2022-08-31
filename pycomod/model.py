@@ -117,10 +117,10 @@ class model:
         self._reset()
 
         d = {}
-        elements = [(k,v) for k,v in self.__dict__.items()
+        elements = [(k, v) for k, v in self.__dict__.items()
                     if isinstance(v, (pool, parameter, model))]
 
-        for k,v in elements:
+        for k, v in elements:
             if isinstance(v, model):
                 d[k] = v._get_init_dict()
             else:
@@ -144,9 +144,9 @@ class model:
         d[key] = {}
 
         # Add all elements to the dict
-        elements = [(k,v) for k,v in self.__dict__.items()
+        elements = [(k, v) for k, v in self.__dict__.items()
                     if isinstance(v, (pool, parameter, model))]
-        for k,v in elements:
+        for k, v in elements:
             if isinstance(v, model):
                 next_key = key + '.' + k
                 d[key][k] = [next_key]
@@ -193,7 +193,7 @@ class model:
             filename = 'init.xlsx'
 
         with pd.ExcelWriter(filename) as writer:
-            for k,v in d.items():
+            for k, v in d.items():
                 v.to_excel(writer, sheet_name=k, index=False)
 
 
@@ -201,7 +201,7 @@ class model:
     def _push_init(self, key, value):
         getattr(self, key).init_cond(value)
         for m in self._models:
-            m._push_init(key,value)
+            m._push_init(key, value)
 
 
     # UPDATE FUNCTIONS
@@ -537,7 +537,7 @@ class model:
     # Create container for mc output based on output from first replication
     def _init_output_mc(self, output):
         output_mc = {}
-        for k,v in output.items():
+        for k, v in output.items():
             if not isinstance(v, dict):
                 output_mc[k] = np.array([v])
             else:
@@ -547,7 +547,7 @@ class model:
 
     # Append output from subsequent replications to the mc output
     def _append_output_mc(self, output_mc, output):
-        for k,v in output.items():
+        for k, v in output.items():
             if not isinstance(v, dict):
                 output_mc[k] = np.append(output_mc[k], np.array([v]), axis=0)
             else:

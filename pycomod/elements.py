@@ -150,7 +150,7 @@ class pool(building_block):
 # parameter is set to true
 class flow(building_block):
     # Constructor
-    def __init__(self, rate_func=lambda:1, src=None, dest=None,
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None,
                  priority=False, init=False):
         super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
@@ -199,7 +199,7 @@ class parameter(building_block):
 # the start of the simulation
 class sample(building_block):
     # Constructor
-    def __init__(self, sample_func=lambda:1):
+    def __init__(self, sample_func=lambda: 1):
         super().__init__(sample_func())
         self.sample_func = sample_func
 
@@ -212,7 +212,7 @@ class sample(building_block):
 # used in flow equations
 class equation(building_block):
     # Constructor
-    def __init__(self, eq_func=lambda:1):
+    def __init__(self, eq_func=lambda: 1):
         super().__init__(eq_func())
         self.eq_func = eq_func
 
@@ -253,7 +253,7 @@ class impulse(equation):
                 return default
             # Else return sum of impulse values that fall within the t-dt and t
             else:
-                return sum(i*j for i,j in zip(values,y))
+                return sum(i*j for i, j in zip(values, y))
 
         super().__init__(eq_func)
 

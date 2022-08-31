@@ -11,7 +11,7 @@ class plotter:
         # Display plots
         mplot.show()
 
-    def __init__(self, figsize=(14,6), fontsize=12, title=None,
+    def __init__(self, figsize=(14, 6), fontsize=12, title=None,
                  xlabel=None, ylabel=None, ylimit=None):
         # Mpl settings
         mplot.rc('font', size=fontsize)
@@ -107,7 +107,7 @@ class plotter:
         x = run['x_dates']
 
         # Init timeseries data for plotting
-        d = np.zeros((r,len(x)))
+        d = np.zeros((r, len(x)))
 
         # Parse elements: remove whitespace and split on +
         elements = elements.replace(' ', '').split('+')
