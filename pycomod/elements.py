@@ -1,6 +1,7 @@
 import numpy as np
 import datetime
 
+
 # Building block class for model elements
 # Handles the initial value, current value, and history of values for the
 # element
@@ -66,6 +67,7 @@ class sim_time(building_block):
     def update(self, dt):
         self.value = self.value + dt
 
+
 # Sim time dates
 class sim_date(building_block):
     def __init__(self, start_date=None, unit=None):
@@ -91,6 +93,7 @@ class sim_date(building_block):
 
     def update(self, dt):
         self.value = self.value + self.unit*dt
+
 
 # Class for arbitrary run info
 class run_info(building_block):
@@ -140,8 +143,6 @@ class pool(building_block):
         self.value = np.maximum(self.value, 0)
 
         self.reset_flows()
-
-
 
 
 # Class representing a flow between pools where the rate is a function of other
@@ -194,7 +195,6 @@ class parameter(building_block):
         super().reset(value)
 
 
-
 # Class representing a constant that is randomly sampled from a distribution at
 # the start of the simulation
 class sample(building_block):
@@ -205,7 +205,6 @@ class sample(building_block):
 
     def reset(self):
         super().reset(self.sample_func())
-
 
 
 # Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
@@ -221,6 +220,7 @@ class equation(building_block):
 
     def update(self, t, dt):
         self.value = self.eq_func()
+
 
 class step(equation):
     def __init__(self, values, times, default=0):
@@ -259,5 +259,3 @@ class impulse(equation):
 
     def update(self, t, dt):
         self.value = self.eq_func(t, dt)
-
-

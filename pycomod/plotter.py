@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 months = mdates.MonthLocator()  # For month intervals on plots
 months_fmt = mdates.DateFormatter('%b')
 
+
 class plotter:
     @classmethod
     def show(cls):
@@ -72,7 +73,6 @@ class plotter:
             # Append to data
             d = d + data
 
-
         try:
             color = kwargs['color']
         except KeyError:
@@ -88,11 +88,9 @@ class plotter:
         except KeyError:
             cumsum = False
 
-
         # If cumulative
         if cumsum:
             d = np.cumsum(d)
-
 
         self.ax.plot(x, d, color=color, label=label)
 
@@ -166,4 +164,3 @@ class plotter:
         self.ax.fill_between(x, pL, pH, alpha=0.33, color=color, linewidth = 0)
 
         self.ax.legend()
-

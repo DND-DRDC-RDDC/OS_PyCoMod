@@ -1,6 +1,7 @@
 import pandas as pd
 from pycomod.elements import *
 
+
 # Class for building and running the model
 class model:
     def __init__(self, init=None):
@@ -41,14 +42,12 @@ class model:
         if init is not None:
             self._init_cond(init)
 
-
     def _set_output(self, *args):
         self._out = list(args)
 
     def _build(self):
         # Implemented by sub-class
         pass
-
 
     def _register(self):
         # Get all attributes that are an instance of biulding_block and
@@ -89,7 +88,6 @@ class model:
 
         self._has_priority = pri
 
-
     def _init_cond(self, init):
         # Recursively apply initial conditions
         for key, value in init.items():
@@ -127,7 +125,6 @@ class model:
                 d[k] = v()
 
         return d
-
 
     # Get dataframes representing initial conditions for the model
     def _get_init_df(self, d=None, key=None):
@@ -196,13 +193,11 @@ class model:
             for k, v in d.items():
                 v.to_excel(writer, sheet_name=k, index=False)
 
-
     # Set initial condition and push to submodels
     def _push_init(self, key, value):
         getattr(self, key).init_cond(value)
         for m in self._models:
             m._push_init(key, value)
-
 
     # UPDATE FUNCTIONS
     def _add_init_flows(self):
@@ -215,8 +210,6 @@ class model:
         for e in self._init_flows:
             e.add_flows()
 
-
-
     def _add_priority_flows(self):
 
         # Recurse through sub-models
@@ -227,8 +220,6 @@ class model:
         for e in self._priority_flows:
             e.add_flows()
 
-
-
     def _add_flows(self):
 
         # Recurse through sub-models
@@ -238,7 +229,6 @@ class model:
         # Add flows to pools
         for e in self._flows:
             e.add_flows()
-
 
     def _update_pools(self, passno=1):
 
@@ -251,7 +241,6 @@ class model:
             e.update()
             e.save_hist(passno)
 
-
     def _update_equations(self, passno=1):
 
         # Recurse through sub-models
@@ -262,7 +251,6 @@ class model:
         for e in self._equations:
             e.update(self._t(), self._dt())
             e.save_hist(passno)
-
 
     def _update_init_flows(self, passno=1):
 
@@ -276,7 +264,6 @@ class model:
         for e in self._init_flows:
             e.save_hist(passno)
 
-
     def _update_priority_flows(self, passno=1):
 
         # Recurse through sub-models
@@ -288,8 +275,6 @@ class model:
             e.update(self._dt())
         for e in self._priority_flows:
             e.save_hist(passno)
-
-
 
     def _update_flows(self, passno=1):
 
@@ -303,8 +288,6 @@ class model:
         for e in self._flows:
             e.save_hist(passno)
 
-
-
     def _update_time(self, passno=1):
 
         # Recurse through sub-models
@@ -317,8 +300,6 @@ class model:
 
         self._date.update(self._dt())
         self._date.save_hist(passno)
-
-
 
     # Regular update sequence
     def _update_regular(self):
@@ -347,7 +328,6 @@ class model:
 
         self._update_init_flows()
 
-
     # Update pass for all model elements
     def _update(self):
 
@@ -360,8 +340,6 @@ class model:
         else:
             self._update_regular()
 
-
-
     def _reset_pools(self):
 
         # Recurse through sub-models
@@ -371,8 +349,6 @@ class model:
         # Reset pools
         for e in self._pools:
             e.reset()
-
-
 
     def _reset_parameters(self):
 
@@ -384,8 +360,6 @@ class model:
         for e in self._parameters:
             e.reset()
 
-
-
     def _reset_samples(self):
 
         # Recurse through sub-models
@@ -395,8 +369,6 @@ class model:
         # Reset samples
         for e in self._samples:
             e.reset()
-
-
 
     def _reset_equations(self):
 
@@ -408,7 +380,6 @@ class model:
         for e in self._equations:
             e.reset()
 
-
     def _reset_init_flows(self):
 
         # Recurse through sub-models
@@ -418,8 +389,6 @@ class model:
         # Reset samples
         for e in self._init_flows:
             e.reset()
-
-
 
     def _reset_priority_flows(self):
 
@@ -431,8 +400,6 @@ class model:
         for e in self._priority_flows:
             e.reset()
 
-
-
     def _reset_flows(self):
 
         # Recurse through sub-models
@@ -443,7 +410,6 @@ class model:
         for e in self._flows:
             e.reset()
 
-
     def _reset_time(self):
 
         # Recurse through sub-models
@@ -452,7 +418,6 @@ class model:
 
         self._t.reset()
         self._date.reset()
-
 
     def _reset_output(self):
         self._output = None
@@ -496,7 +461,6 @@ class model:
 
         return self._output
 
-
     # Do a run
     def _run(self, end=None, dt=None, start_time=None,
              start_date=None, init=None):
@@ -532,7 +496,6 @@ class model:
 
         # Save output
         self._save_output()
-
 
     # Create container for mc output based on output from first replication
     def _init_output_mc(self, output):
@@ -590,5 +553,3 @@ class model:
         for n in range(int(self._reps())):
             self._run()
             self._save_output_mc()
-
-

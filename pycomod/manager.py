@@ -1,6 +1,7 @@
 import datetime
 import pandas as pd
 
+
 # Function to read init from excel file
 def read_excel_init(file, sheet=None):
     # If file is a string (first call), read the file
@@ -99,13 +100,11 @@ class run_manager:
 
         self.runs[label] = run_data
 
-
     # Execute a run on model once using init (initial conditions)
     def run(self, model, init=None, duration=None, label=None, dt=None,
             start_date=None, start_time=None):
         self._run(model, init, duration, label, dt,
                   start_date, start_time, reps=1)
-
 
     # Execute a monte-carlo run on model using init (initial conditions)
     def run_mc(self, model, init=None, duration=None, label=None, dt=None,
