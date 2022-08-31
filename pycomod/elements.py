@@ -106,7 +106,7 @@ class run_info(building_block):
 
     # Parameters accept an initial condition
     def init_cond(self, value):
-          super().reset(value)
+        super().reset(value)
 
 
 # Class representing a pool of people, e.g. the S, I and R in SIR models
@@ -128,7 +128,7 @@ class pool(building_block):
 
     # Reset flows
     def reset_flows(self):
-          self.delta = 0
+        self.delta = 0
 
     # Add a flow volume to the pool
     def add_flow(self, volume):

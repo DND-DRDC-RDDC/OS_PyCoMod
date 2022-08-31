@@ -108,6 +108,6 @@ class run_manager:
 
     # Execute a monte-carlo run on model using init (initial conditions)
     def run_mc(self, model, init=None, duration=None, label=None, dt=None,
-            start_date=None, start_time=None, reps=None):
+               start_date=None, start_time=None, reps=None):
         self._run(model, init, duration, label, dt,
                   start_date, start_time, reps)
