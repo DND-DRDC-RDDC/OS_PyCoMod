@@ -482,7 +482,7 @@ class model:
             self._push_init('_t', start_time)
 
         if start_date is not None:
-            self_push_init('_date', start_date)
+            self._push_init('_date', start_date)
 
         # Number of sim steps
         n = int(self._end()/self._dt())
@@ -546,7 +546,7 @@ class model:
             self._push_init('_t', start_time)
 
         if start_date is not None:
-            self_push_init('_date', start_date)
+            self._push_init('_date', start_date)
 
         # Reset mc output
         self._reset_output_mc()
