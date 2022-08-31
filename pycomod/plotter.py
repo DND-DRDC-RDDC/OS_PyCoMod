@@ -2,73 +2,73 @@ import numpy as np
 import matplotlib.pyplot as mplot
 import matplotlib.dates as mdates
 
-months = mdates.MonthLocator()  # for month intervals on plots
+months = mdates.MonthLocator()  # For month intervals on plots
 months_fmt = mdates.DateFormatter('%b')
 
 class plotter:
     @classmethod
     def show(cls):
-        # display plots
+        # Display plots
         mplot.show()
 
     def __init__(self, figsize=(14,6), fontsize=12, title=None, xlabel=None, ylabel=None, ylimit=None):
-        # mpl settings
+        # Mpl settings
         mplot.rc('font', size=fontsize)
         mplot.rc('figure', figsize=figsize)
 
-        # create figure
+        # Create figure
         self.fig, self.ax = mplot.subplots()
 
-        # grid lines
+        # Grid lines
         self.ax.grid(True, ls=':')
 
-        # monthly axis tick marks
+        # Monthly axis tick marks
         self.ax.xaxis.set_major_locator(months)
         self.ax.xaxis.set_major_formatter(months_fmt)
 
-        # title
+        # Title
         if title is not None:
             self.ax.set_title(title)
 
-        # axis labels
+        # Axis labels
         if xlabel is not None:
             self.ax.set(xlabel=xlabel)
         if ylabel is not None:
             self.ax.set(ylabel=ylabel)
 
-        # y axis limits
+        # Y axis limits
         if ylimit is not None:
             self.ax.set_ylim(*ylimit)
 
     def plot(self, run, elements, **kwargs):
-        # first setup plot if not done already
+        # First setup plot if not done already
         if self.fig is None:
             self.setup()
 
         x = run['x_dates']
 
-        # init timeseries data for plotting
+        # Init timeseries data for plotting
         d = np.zeros(len(x))
 
-        # parse elements
-        elements = elements.replace(' ', '').split('+')  # remove whitespace and split on +
+        # Parse elements
+        elements = elements.replace(' ', '').split('+')  # Remove whitespace and split on +
 
-        # for each supplied element
+        # For each supplied element
         for s in elements:
 
-            # split breadcrumbs
+            # Split breadcrumbs
             s = s.split('.')
 
-            # get the data
+            # Get the data
             data = run['output']
             for e in s:
                 data = data[e]
 
-            # if data is 2d (meaning it includes cohorts), sum across cohorts
+            # If data is 2d (meaning it includes cohorts), sum across cohorts
             if data.ndim == 2:
                 data = data.sum(axis=1)
 
-            # append to data
+            # Append to data
             d = d + data
 
 
@@ -88,7 +88,7 @@ class plotter:
             cumsum = False
 
 
-        # if cumulative
+        # If cumulative
         if cumsum:
             d = np.cumsum(d)
 
@@ -98,35 +98,35 @@ class plotter:
         self.ax.legend()
 
     def plot_mc(self, run, elements, **kwargs):
-        # first setup plot if not done already
+        # First setup plot if not done already
         if self.fig is None:
             self.setup()
 
         r = run['reps']  # CHECK THAT THIS WORKS!!
         x = run['x_dates']
 
-        # init timeseries data for plotting
+        # Init timeseries data for plotting
         d = np.zeros((r,len(x)))
 
-        # parse elements
-        elements = elements.replace(' ', '').split('+')  # remove whitespace and split on +
+        # Parse elements
+        elements = elements.replace(' ', '').split('+')  # Remove whitespace and split on +
 
-        # for each supplied element
+        # For each supplied element
         for s in elements:
 
-            # split breadcrumbs
+            # Split breadcrumbs
             s = s.split('.')
 
-            # get the data
+            # Get the data
             data = run['output_mc']
             for e in s:
                 data = data[e]
 
-            # if data is 2d (meaning it includes cohorts), sum across cohorts
+            # If data is 2d (meaning it includes cohorts), sum across cohorts
             if data.ndim == 3:
                 data = data.sum(axis=2)
 
-            # append to data
+            # Append to data
             d = d + data
 
         try:
@@ -149,7 +149,7 @@ class plotter:
         except KeyError:
             cumsum = False
 
-        # if cum sum, cumulative sum along time axis
+        # If cum sum, cumulative sum along time axis
         if cumsum:
             d = np.cumsum(d, axis=1)
 

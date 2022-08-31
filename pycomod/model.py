@@ -1,20 +1,20 @@
 import pandas as pd
 from pycomod.elements import *
 
-# class for building and running the model
+# Class for building and running the model
 class model:
     def __init__(self, init=None):
 
-        # time info
+        # Time info
         self._t = sim_time()
         self._date = sim_date()
 
-        # run info
+        # Run info
         self._dt = run_info(1)
         self._end = run_info(365)
         self._reps = run_info(100)
 
-        # model elements
+        # Model elements
         self._parameters = []
         self._samples = []
         self._equations = []
@@ -23,18 +23,18 @@ class model:
         self._flows = []
         self._pools = []
 
-        # sub-models
+        # Sub-models
         self._models = []
 
-        # output
-        self._out = None  # elements to track for output
-        self._output = None  # output from run
-        self._output_mc = None  # output from mc runs
+        # Output
+        self._out = None  # Elements to track for output
+        self._output = None  # Output from run
+        self._output_mc = None  # Output from mc runs
 
-        # priority flow flag
+        # Priority flow flag
         self._has_priority = False
 
-        # setup
+        # Setup
         self._build()
         self._register()
         self._check_priority()
@@ -46,12 +46,12 @@ class model:
         self._out = list(args)
 
     def _build(self):
-        # implemented by sub-class
+        # Implemented by sub-class
         pass
 
 
     def _register(self):
-        # get all attributes that are an instance of biulding_block and organize them into lists
+        # Get all attributes that are an instance of biulding_block and organize them into lists
 
         elements = [x for x in self.__dict__.values() if isinstance(x, (building_block, model))]
 
@@ -74,7 +74,7 @@ class model:
             elif isinstance(e, model):
                 self._models.append(e)
 
-    # check self and sub-models for priority flows and updates _has_priority flag
+    # Check self and sub-models for priority flows and updates _has_priority flag
     def _check_priority(self):
         pri = False
         if len(self._priority_flows) > 0:
@@ -88,27 +88,27 @@ class model:
 
 
     def _init_cond(self, init):
-        # recursively apply initial conditions
+        # Recursively apply initial conditions
         for key, value in init.items():
             if key == '_out':
-                # store elements of this model to be tracked for output
+                # Store elements of this model to be tracked for output
                 self._out = value
             elif key in ['_dt', '_t', '_end', '_date', '_reps']:
-                # if time and run info, push init to submodels
+                # If time and run info, push init to submodels
                 self._push_init(key, value)
             else:
-                # set initial condition
+                # Set initial condition
                 e = getattr(self, key)
 
-                # if it's a model
+                # If it's a model
                 if isinstance(e, model):
                     e._init_cond(value)
 
-                # if it's an element
+                # If it's an element
                 else:
                     e.init_cond(value)
 
-    # get the initial condition dict for this model
+    # Get the initial condition dict for this model
     def _get_init_dict(self):
 
         self._reset()
@@ -125,7 +125,7 @@ class model:
         return d
 
 
-    # get dataframes representing initial conditions for the model
+    # Get dataframes representing initial conditions for the model
     def _get_init_df(self, d=None, key=None):
 
         self._reset()
@@ -136,10 +136,10 @@ class model:
         if key is None:
             key = 'init'
 
-        # create dict
+        # Create dict
         d[key] = {}
 
-        # add all elements to the dict
+        # Add all elements to the dict
         elements = [(k,v) for k,v in self.__dict__.items() if isinstance(v, (pool, parameter, model))]
         for k,v in elements:
             if isinstance(v, model):
@@ -152,13 +152,13 @@ class model:
                 else:
                     d[key][k] = [v()]
 
-        # add output tracking
+        # Add output tracking
         if self._out is None:
             d[key]['_out'] = [None]
         else:
             d[key]['_out'] = self._out
 
-        # add special settings to top level init
+        # Add special settings to top level init
         if key == 'init':
             d[key]['_t'] = [self._t()]
             d[key]['_date'] = [self._date()]
@@ -166,21 +166,21 @@ class model:
             d[key]['_end'] = [self._end()]
             d[key]['_reps'] = [self._reps()]
 
-        # get max num rows
+        # Get max num rows
         rows = max([len(x) for x in d[key].values()])
 
-        # normalize column lengths
+        # Normalize column lengths
         for k in d[key].keys():
             add = rows - len(d[key][k])
             if add>0:
                 d[key][k] = np.append(d[key][k], [None]*add)
 
-        # convert to dataframe
+        # Convert to dataframe
         d[key] = pd.DataFrame.from_dict(d[key])
 
         return d
 
-    # write an excel file containing initial conditions for the model
+    # Write an excel file containing initial conditions for the model
     def _write_excel_init(self, filename=None):
         d = self._get_init_df()
 
@@ -192,7 +192,7 @@ class model:
                 v.to_excel(writer, sheet_name=k, index=False)
 
 
-    # set initial condition and push to submodels
+    # Set initial condition and push to submodels
     def _push_init(self, key, value):
         getattr(self, key).init_cond(value)
         for m in self._models:
@@ -202,11 +202,11 @@ class model:
     # UPDATE FUNCTIONS
     def _add_init_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._add_init_flows()
 
-        # add priority flows to pools
+        # Add priority flows to pools
         for e in self._init_flows:
             e.add_flows()
 
@@ -214,11 +214,11 @@ class model:
 
     def _add_priority_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._add_priority_flows()
 
-        # add priority flows to pools
+        # Add priority flows to pools
         for e in self._priority_flows:
             e.add_flows()
 
@@ -226,22 +226,22 @@ class model:
 
     def _add_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._add_flows()
 
-        # add flows to pools
+        # Add flows to pools
         for e in self._flows:
             e.add_flows()
 
 
     def _update_pools(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_pools(passno)
 
-        # update pools (in order)
+        # Update pools (in order)
         for e in self._pools:
             e.update()
             e.save_hist(passno)
@@ -249,11 +249,11 @@ class model:
 
     def _update_equations(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_equations(passno)
 
-        # update equations (in order)
+        # Update equations (in order)
         for e in self._equations:
             e.update(self._t(), self._dt())
             e.save_hist(passno)
@@ -261,11 +261,11 @@ class model:
 
     def _update_init_flows(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_init_flows(passno)
 
-        # update init flows (order independent)
+        # Update init flows (order independent)
         for e in self._init_flows:
             e.update(self._dt())
         for e in self._init_flows:
@@ -274,11 +274,11 @@ class model:
 
     def _update_priority_flows(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_priority_flows(passno)
 
-        # update priority flows (order independent)
+        # Update priority flows (order independent)
         for e in self._priority_flows:
             e.update(self._dt())
         for e in self._priority_flows:
@@ -288,11 +288,11 @@ class model:
 
     def _update_flows(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_flows(passno)
 
-        # update priority flows (order independent)
+        # Update priority flows (order independent)
         for e in self._flows:
             e.update(self._dt())
         for e in self._flows:
@@ -302,11 +302,11 @@ class model:
 
     def _update_time(self, passno=1):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._update_time(passno)
 
-        # update time info
+        # Update time info
         self._t.update(self._dt())
         self._t.save_hist(passno)
 
@@ -315,7 +315,7 @@ class model:
 
 
 
-    # regular update sequence
+    # Regular update sequence
     def _update_regular(self):
 
         self._add_flows()
@@ -325,7 +325,7 @@ class model:
 
         self._update_init_flows()
 
-    # update sequence when priority flows are being used (2 passes)
+    # Update sequence when priority flows are being used (2 passes)
     def _update_priority(self):
 
         # FIRST PASS FOR PRIORITY FLOWS
@@ -343,13 +343,13 @@ class model:
         self._update_init_flows()
 
 
-    # update pass for all model elements
+    # Update pass for all model elements
     def _update(self):
 
-        # update time
+        # Update time
         self._update_time()
 
-        # update model elements
+        # Update model elements
         if self._has_priority:
             self._update_priority()
         else:
@@ -359,11 +359,11 @@ class model:
 
     def _reset_pools(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_pools()
 
-        # reset pools
+        # Reset pools
         for e in self._pools:
             e.reset()
 
@@ -371,11 +371,11 @@ class model:
 
     def _reset_parameters(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_parameters()
 
-        # reset parameters
+        # Reset parameters
         for e in self._parameters:
             e.reset()
 
@@ -383,11 +383,11 @@ class model:
 
     def _reset_samples(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_samples()
 
-        # reset samples
+        # Reset samples
         for e in self._samples:
             e.reset()
 
@@ -395,22 +395,22 @@ class model:
 
     def _reset_equations(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_equations()
 
-        # reset samples
+        # Reset samples
         for e in self._equations:
             e.reset()
 
 
     def _reset_init_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_init_flows()
 
-        # reset samples
+        # Reset samples
         for e in self._init_flows:
             e.reset()
 
@@ -418,11 +418,11 @@ class model:
 
     def _reset_priority_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_priority_flows()
 
-        # reset samples
+        # Reset samples
         for e in self._priority_flows:
             e.reset()
 
@@ -430,18 +430,18 @@ class model:
 
     def _reset_flows(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_flows()
 
-        # reset samples
+        # Reset samples
         for e in self._flows:
             e.reset()
 
 
     def _reset_time(self):
 
-        # recurse through sub-models
+        # Recurse through sub-models
         for m in self._models:
             m._reset_time()
 
@@ -455,14 +455,14 @@ class model:
     def _reset_output_mc(self):
         self._output_mc = None
 
-    # reset all model elements to initial conditions
+    # Reset all model elements to initial conditions
     def _reset(self):
 
-        # reset time
+        # Reset time
         self._reset_time()
         self._reset_output()
 
-        # reset all elements
+        # Reset all elements
         self._reset_pools()
         self._reset_parameters()
         self._reset_samples()
@@ -471,14 +471,14 @@ class model:
         self._reset_priority_flows()
         self._reset_flows()
 
-        # apply init flows
+        # Apply init flows
         self._add_init_flows()
         self._update_pools(2)
         self._update_equations(2)
         self._update_priority_flows(2)
         self._update_flows(2)
 
-    # save all output
+    # Save all output
     def _save_output(self):
         self._output = {}
         for key in self._out:
@@ -492,14 +492,14 @@ class model:
         return self._output
 
 
-    # do a run
+    # Do a run
     def _run(self, end=None, dt=None, start_time=None, start_date=None, init=None):
 
-        # first apply initial conditions from init dict
+        # First apply initial conditions from init dict
         if init is not None:
             self._init_cond(init)
 
-        # override for any of the following run parameters
+        # Override for any of the following run parameters
         if end is not None:
             self._push_init('_end', end)
 
@@ -512,23 +512,23 @@ class model:
         if start_date is not None:
             self_push_init('_date', start_date)
 
-        # number of sim steps
+        # Number of sim steps
         n = int(self._end()/self._dt())
 
-        # reset after applying initial conditions
+        # Reset after applying initial conditions
         self._reset()
 
-        # for each time step update everything
+        # For each time step update everything
         for i in range(n):
 
-            # update model elements
+            # Update model elements
             self._update()
 
-        # save output
+        # Save output
         self._save_output()
 
 
-    # create container for mc output based on output from first replication
+    # Create container for mc output based on output from first replication
     def _init_output_mc(self, output):
         output_mc = {}
         for k,v in output.items():
@@ -539,7 +539,7 @@ class model:
 
         return output_mc
 
-    # append output from subsequent replications to the mc output
+    # Append output from subsequent replications to the mc output
     def _append_output_mc(self, output_mc, output):
         for k,v in output.items():
             if not isinstance(v, dict):
@@ -547,20 +547,20 @@ class model:
             else:
                 self._append_output_mc(output_mc[k], v)
 
-    # save output from MC runs
+    # Save output from MC runs
     def _save_output_mc(self):
         if self._output_mc is None:
             self._output_mc = self._init_output_mc(self._output)
         else:
             self._append_output_mc(self._output_mc, self._output)
 
-    # monte carlo runs
+    # Monte carlo runs
     def _run_mc(self, reps=None, end=None, dt=None, start_time=None, start_date=None, init=None):
-        # first apply initial conditions from init dict
+        # First apply initial conditions from init dict
         if init is not None:
             self._init_cond(init)
 
-        # override for any of the following run parameters
+        # Override for any of the following run parameters
         if reps is not None:
             self._push_init('_reps', reps)
 
@@ -576,10 +576,10 @@ class model:
         if start_date is not None:
             self_push_init('_date', start_date)
 
-        # reset mc output
+        # Reset mc output
         self._reset_output_mc()
 
-        # run all reps and save mc output
+        # Run all reps and save mc output
         for n in range(int(self._reps())):
             self._run()
             self._save_output_mc()
