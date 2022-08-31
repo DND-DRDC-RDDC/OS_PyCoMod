@@ -12,7 +12,7 @@ class building_block:
 
         self.init_value = value
         self.value = value
-        self.value_hist = [value] # history of values
+        self.value_hist = [value]  # history of values
 
     def reset(self, value=None):
 
@@ -129,7 +129,7 @@ class pool(building_block):
 
     # update the value of the pool based on flows affecting the pool
     def update(self):
-        self.value = self.value + self.delta  #be careful: numpy arrays treat += as self-modifying
+        self.value = self.value + self.delta  # be careful: numpy arrays treat += as self-modifying
 
         # prevent negative values for pool (this needs more thought)
         self.value = np.maximum(self.value, 0)
@@ -145,7 +145,7 @@ class flow(building_block):
     # constructor
     def __init__(self, rate_func=lambda:1, src=None, dest=None, priority=False, init=False):
         super().__init__(rate_func())
-        self.rate_func = rate_func  #function defining the flow
+        self.rate_func = rate_func  # function defining the flow
         self.src = src
         self.dest = dest
         self.priority = priority

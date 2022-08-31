@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as mplot
 import matplotlib.dates as mdates
 
-months = mdates.MonthLocator()  #for month intervals on plots
+months = mdates.MonthLocator()  # for month intervals on plots
 months_fmt = mdates.DateFormatter('%b')
 
 class plotter:
@@ -51,7 +51,7 @@ class plotter:
         d = np.zeros(len(x))
 
         # parse elements
-        elements = elements.replace(' ', '').split('+') #remove whitespace and split on +
+        elements = elements.replace(' ', '').split('+')  # remove whitespace and split on +
 
         # for each supplied element
         for s in elements:
@@ -102,14 +102,14 @@ class plotter:
         if self.fig is None:
             self.setup()
 
-        r = run['reps']  #CHECK THAT THIS WORKS!!
+        r = run['reps']  # CHECK THAT THIS WORKS!!
         x = run['x_dates']
 
         # init timeseries data for plotting
         d = np.zeros((r,len(x)))
 
         # parse elements
-        elements = elements.replace(' ', '').split('+') #remove whitespace and split on +
+        elements = elements.replace(' ', '').split('+')  # remove whitespace and split on +
 
         # for each supplied element
         for s in elements:

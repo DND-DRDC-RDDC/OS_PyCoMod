@@ -58,7 +58,7 @@ class run_manager:
         # run info
         model_type = str(type(model)).split('.')[1][:-2]
         init_hash = hash(str(init))
-        timestamp = str(datetime.datetime.now()) #running in cloud so may not match local time
+        timestamp = str(datetime.datetime.now())  # running in cloud so may not match local time
 
         # create default label is label is None
         if label is None:

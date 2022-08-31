@@ -27,9 +27,9 @@ class model:
         self._models = []
 
         # output
-        self._out = None  #elements to track for output
-        self._output = None  #output from run
-        self._output_mc = None  #output from mc runs
+        self._out = None  # elements to track for output
+        self._output = None  # output from run
+        self._output_mc = None  # output from mc runs
 
         # priority flow flag
         self._has_priority = False
