@@ -176,7 +176,7 @@ class model:
         # Normalize column lengths
         for k in d[key].keys():
             add = rows - len(d[key][k])
-            if add>0:
+            if add > 0:
                 d[key][k] = np.append(d[key][k], [None]*add)
 
         # Convert to dataframe

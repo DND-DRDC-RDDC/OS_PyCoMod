@@ -161,6 +161,6 @@ class plotter:
         pH = np.percentile(d, p_high, axis=0)
 
         self.ax.plot(x, pM, color=color, label=label)
-        self.ax.fill_between(x, pL, pH, alpha=0.33, color=color, linewidth = 0)
+        self.ax.fill_between(x, pL, pH, alpha=0.33, color=color, linewidth=0)
 
         self.ax.legend()
