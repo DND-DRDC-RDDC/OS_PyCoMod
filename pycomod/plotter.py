@@ -6,7 +6,7 @@ months = mdates.MonthLocator()  # For month intervals on plots
 months_fmt = mdates.DateFormatter('%b')
 
 
-class plotter:
+class Plotter:
     @classmethod
     def show(cls):
         # Display plots

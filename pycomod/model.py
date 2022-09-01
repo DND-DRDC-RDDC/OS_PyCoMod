@@ -1,21 +1,21 @@
 import numpy as np
 import pandas as pd
-from pycomod.elements import (building_block, sim_time, sim_date, run_info,
-                              pool, flow, parameter, sample, equation)
+from pycomod.elements import (BuildingBlock, SimTime, SimDate, RunInfo,
+                              Pool, Flow, Parameter, Sample, Equation)
 
 
 # Class for building and running the model
-class model:
+class Model:
     def __init__(self, init=None):
 
         # Time info
-        self._t = sim_time()
-        self._date = sim_date()
+        self._t = SimTime()
+        self._date = SimDate()
 
         # Run info
-        self._dt = run_info(1)
-        self._end = run_info(365)
-        self._reps = run_info(100)
+        self._dt = RunInfo(1)
+        self._end = RunInfo(365)
+        self._reps = RunInfo(100)
 
         # Model elements
         self._parameters = []
@@ -56,25 +56,25 @@ class model:
         # organize them into lists
 
         elements = [x for x in self.__dict__.values()
-                    if isinstance(x, (building_block, model))]
+                    if isinstance(x, (BuildingBlock, Model))]
 
         for e in elements:
-            if isinstance(e, sample):
+            if isinstance(e, Sample):
                 self._samples.append(e)
-            elif isinstance(e, parameter):
+            elif isinstance(e, Parameter):
                 self._parameters.append(e)
-            elif isinstance(e, equation):
+            elif isinstance(e, Equation):
                 self._equations.append(e)
-            elif isinstance(e, flow):
+            elif isinstance(e, Flow):
                 if e.init:
                     self._init_flows.append(e)
                 elif e.priority:
                     self._priority_flows.append(e)
                 else:
                     self._flows.append(e)
-            elif isinstance(e, pool):
+            elif isinstance(e, Pool):
                 self._pools.append(e)
-            elif isinstance(e, model):
+            elif isinstance(e, Model):
                 self._models.append(e)
 
     # Check self and sub-models for priority flows and updates _has_priority
@@ -104,7 +104,7 @@ class model:
                 e = getattr(self, key)
 
                 # If it's a model
-                if isinstance(e, model):
+                if isinstance(e, Model):
                     e._init_cond(value)
 
                 # If it's an element
@@ -118,10 +118,10 @@ class model:
 
         d = {}
         elements = [(k, v) for k, v in self.__dict__.items()
-                    if isinstance(v, (pool, parameter, model))]
+                    if isinstance(v, (Pool, Parameter, Model))]
 
         for k, v in elements:
-            if isinstance(v, model):
+            if isinstance(v, Model):
                 d[k] = v._get_init_dict()
             else:
                 d[k] = v()
@@ -144,9 +144,9 @@ class model:
 
         # Add all elements to the dict
         elements = [(k, v) for k, v in self.__dict__.items()
-                    if isinstance(v, (pool, parameter, model))]
+                    if isinstance(v, (Pool, Parameter, Model))]
         for k, v in elements:
-            if isinstance(v, model):
+            if isinstance(v, Model):
                 next_key = key + '.' + k
                 d[key][k] = [next_key]
                 v._get_init_df(d, next_key)
@@ -456,9 +456,9 @@ class model:
         for key in self._out:
             e = getattr(self, key)
 
-            if isinstance(e, building_block):
+            if isinstance(e, BuildingBlock):
                 self._output[key] = getattr(self, key).get_hist()
-            elif isinstance(e, model):
+            elif isinstance(e, Model):
                 self._output[key] = e._save_output()
 
         return self._output

@@ -1,5 +1,5 @@
-from pycomod.elements import (pool, flow, parameter, sample, equation, step,
-                              impulse)
-from pycomod.model import model
-from pycomod.manager import run_manager
-from pycomod.plotter import plotter
+from pycomod.elements import (Pool, Flow, Parameter, Sample,
+                              Equation, Step, Impulse)
+from pycomod.model import Model
+from pycomod.manager import RunManager
+from pycomod.plotter import Plotter

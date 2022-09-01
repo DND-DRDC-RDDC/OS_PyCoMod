@@ -5,7 +5,7 @@ import datetime
 # Building block class for model elements
 # Handles the initial value, current value, and history of values for the
 # element
-class building_block:
+class BuildingBlock:
 
     def __init__(self, value=1):
 
@@ -54,7 +54,7 @@ class building_block:
 
 
 # Sim time
-class sim_time(building_block):
+class SimTime(BuildingBlock):
     def __init__(self, value=0):
         super().__init__(value)
 
@@ -69,7 +69,7 @@ class sim_time(building_block):
 
 
 # Sim time dates
-class sim_date(building_block):
+class SimDate(BuildingBlock):
     def __init__(self, start_date=None, unit=None):
 
         if start_date is None:
@@ -96,7 +96,7 @@ class sim_date(building_block):
 
 
 # Class for arbitrary run info
-class run_info(building_block):
+class RunInfo(BuildingBlock):
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -110,7 +110,7 @@ class run_info(building_block):
 
 
 # Class representing a pool of people, e.g. the S, I and R in SIR models
-class pool(building_block):
+class Pool(BuildingBlock):
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -149,7 +149,7 @@ class pool(building_block):
 # values in the model
 # If the flow equation defines a volume (as in discrete flows), the volume
 # parameter is set to true
-class flow(building_block):
+class Flow(BuildingBlock):
     # Constructor
     def __init__(self, rate_func=lambda: 1, src=None, dest=None,
                  priority=False, init=False):
@@ -182,7 +182,7 @@ class flow(building_block):
 # Class representing a model parameter that can change over time
 # IDEA: if parameters can optionally accept a function, this can be called to
 # set the parameter value which would accomplish what random samples do
-class parameter(building_block):
+class Parameter(BuildingBlock):
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -197,7 +197,7 @@ class parameter(building_block):
 
 # Class representing a constant that is randomly sampled from a distribution at
 # the start of the simulation
-class sample(building_block):
+class Sample(BuildingBlock):
     # Constructor
     def __init__(self, sample_func=lambda: 1):
         super().__init__(sample_func())
@@ -209,7 +209,7 @@ class sample(building_block):
 
 # Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
 # used in flow equations
-class equation(building_block):
+class Equation(BuildingBlock):
     # Constructor
     def __init__(self, eq_func=lambda: 1):
         super().__init__(eq_func())
@@ -222,7 +222,7 @@ class equation(building_block):
         self.value = self.eq_func()
 
 
-class step(equation):
+class Step(Equation):
     def __init__(self, values, times, default=0):
 
         # Define the step function
@@ -239,7 +239,7 @@ class step(equation):
         self.value = self.eq_func(t)
 
 
-class impulse(equation):
+class Impulse(Equation):
     def __init__(self, values, times, default=0):
 
         # Define the impulse function
