@@ -70,6 +70,7 @@ Given a population of size 100, where 5 individuals are infected (I) and the rem
 
 ```python
 class SimpleSIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool(95)
@@ -134,6 +135,7 @@ To incorporate additional model elemets, such as compartments, parameters, or ra
 
 ```python
 class SimpleSEIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool(95)
@@ -189,6 +191,7 @@ import numpy as np
 rng = np.random.default_rng()
 
 class MonteCarloSIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool(95)
@@ -255,6 +258,7 @@ PyCoMod models support nesting, so any PyCoMod model can be used as an element i
 
 ```Python
 class MixSIR(pcm.Model):
+
     def build(self):
 
         # Sub models
@@ -390,6 +394,7 @@ It is often necessary to adjust model parameters over time. In general this can 
 
 ```Python
 class ModSIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool(95)
@@ -485,6 +490,7 @@ In some cases, it may be useful to incorporate flows into establishing the initi
 
 ```Python
 class MonteCarloSIR2(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool(100)
@@ -553,6 +559,7 @@ For example, we can vectorize the *MonteCarloSIR2* model from the previous secti
 
 ```Python
 class VecSIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool([10] * 10)
@@ -614,6 +621,7 @@ However, it is usually not realistic to assume that populations are perfectly is
 
 ```Python
 class VecSIR(pcm.Model):
+
     def build(self):
         # Pools
         self.S = pcm.Pool([10] * 10)

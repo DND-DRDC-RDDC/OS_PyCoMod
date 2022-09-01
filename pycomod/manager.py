@@ -42,6 +42,7 @@ def read_excel_init(file, sheet=None):
 
 # Class for running models and saving results
 class RunManager:
+
     def __init__(self):
         self.runs = {}
 

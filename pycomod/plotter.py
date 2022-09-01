@@ -7,6 +7,7 @@ months_fmt = mdates.DateFormatter('%b')
 
 
 class Plotter:
+
     @classmethod
     def show(cls):
         # Display plots

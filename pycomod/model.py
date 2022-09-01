@@ -9,6 +9,7 @@ from pycomod.elements import (BuildingBlock, SimTime, SimDate, RunInfo,
 
 # Class for building and running the model
 class Model(ABC):
+
     def __init__(self, init=None):
 
         # Time info

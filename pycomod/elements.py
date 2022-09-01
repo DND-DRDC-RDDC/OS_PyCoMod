@@ -56,6 +56,7 @@ class BuildingBlock:
 
 # Sim time
 class SimTime(BuildingBlock):
+
     def __init__(self, value=0):
         super().__init__(value)
 
@@ -71,6 +72,7 @@ class SimTime(BuildingBlock):
 
 # Sim time dates
 class SimDate(BuildingBlock):
+
     def __init__(self, start_date=None, unit=None):
 
         if start_date is None:
@@ -98,6 +100,7 @@ class SimDate(BuildingBlock):
 
 # Class for arbitrary run info
 class RunInfo(BuildingBlock):
+
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -112,6 +115,7 @@ class RunInfo(BuildingBlock):
 
 # Class representing a pool of people, e.g. the S, I and R in SIR models
 class Pool(BuildingBlock):
+
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -151,6 +155,7 @@ class Pool(BuildingBlock):
 # If the flow equation defines a volume (as in discrete flows), the volume
 # parameter is set to true
 class Flow(BuildingBlock):
+
     # Constructor
     def __init__(self, rate_func=lambda: 1, src=None, dest=None,
                  priority=False, init=False):
@@ -184,6 +189,7 @@ class Flow(BuildingBlock):
 # IDEA: if parameters can optionally accept a function, this can be called to
 # set the parameter value which would accomplish what random samples do
 class Parameter(BuildingBlock):
+
     # Constructor
     def __init__(self, value=1):
         super().__init__(value)
@@ -199,6 +205,7 @@ class Parameter(BuildingBlock):
 # Class representing a constant that is randomly sampled from a distribution at
 # the start of the simulation
 class Sample(BuildingBlock):
+
     # Constructor
     def __init__(self, sample_func=lambda: 1):
         super().__init__(sample_func())
@@ -211,6 +218,7 @@ class Sample(BuildingBlock):
 # Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
 # used in flow equations
 class Equation(BuildingBlock):
+
     # Constructor
     def __init__(self, eq_func=lambda: 1):
         super().__init__(eq_func())
@@ -224,6 +232,7 @@ class Equation(BuildingBlock):
 
 
 class Step(Equation):
+
     def __init__(self, values, times, default=0):
 
         # Define the step function
@@ -241,6 +250,7 @@ class Step(Equation):
 
 
 class Impulse(Equation):
+
     def __init__(self, values, times, default=0):
 
         # Define the impulse function
