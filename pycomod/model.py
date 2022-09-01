@@ -1,11 +1,14 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 import pandas as pd
+
 from pycomod.elements import (BuildingBlock, SimTime, SimDate, RunInfo,
                               Pool, Flow, Parameter, Sample, Equation)
 
 
 # Class for building and running the model
-class Model:
+class Model(ABC):
     def __init__(self, init=None):
 
         # Time info
@@ -47,12 +50,13 @@ class Model:
     def _set_output(self, *args):
         self._out = list(args)
 
+    @abstractmethod
     def _build(self):
         # Implemented by sub-class
         pass
 
     def _register(self):
-        # Get all attributes that are an instance of biulding_block and
+        # Get all attributes that are an instance of BuildingBlock and
         # organize them into lists
 
         elements = [x for x in self.__dict__.values()

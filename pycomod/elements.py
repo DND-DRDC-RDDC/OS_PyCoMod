@@ -1,5 +1,6 @@
-import numpy as np
 import datetime
+
+import numpy as np
 
 
 # Building block class for model elements
