@@ -84,8 +84,10 @@ class SimpleSIR(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(lambda: self.b() * self.S() * self.I() / self.N(),
+                            src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(lambda: self.g() * self.I(),
+                            src=self.I, dest=self.R)
 
         # Output
         self._set_output('S', 'I', 'R')
@@ -115,10 +117,10 @@ Finally, we can plot the results of the run using the PyCoMod *Plotter*.  First 
 
 ```Python
 plt = pcm.Plotter(title='SIR Time Series', ylabel='Population', fontsize=14)
-plt.plot(mgr['My run'],'S', color='blue', label = 'S')
-plt.plot(mgr['My run'],'I', color='orange', label = 'I')
-plt.plot(mgr['My run'],'R', color='green', label = 'R')
-plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
+plt.plot(mgr['My run'], 'S', color='blue', label='S')
+plt.plot(mgr['My run'], 'I', color='orange', label='I')
+plt.plot(mgr['My run'], 'R', color='green', label='R')
+plt.plot(mgr['My run'], 'S + I + R', color='black', label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125519680-4f964905-8c1b-4565-acf9-fac73ea403f4.png)
@@ -140,7 +142,8 @@ class SimpleSEIR(pcm.Model):
         self.R = pcm.Pool(0)
 
         # Equations
-        self.N = pcm.Equation(lambda: self.S() + self.E() + self.I() + self.R())
+        self.N = pcm.Equation(
+                lambda: self.S() + self.E() + self.I() + self.R())
 
         # Parameters
         self.b = pcm.Parameter(0.2)
@@ -148,9 +151,12 @@ class SimpleSEIR(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fse = pcm.Flow(lambda: self.b()*self.S()*self.I()/self.N(), src=self.S, dest=self.E)
-        self.Fei = pcm.Flow(lambda: self.a()*self.E(), src=self.E, dest=self.I)
-        self.Fir = pcm.Flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+        self.Fse = pcm.Flow(lambda: self.b() * self.S() * self.I() / self.N(),
+                            src=self.S, dest=self.E)
+        self.Fei = pcm.Flow(lambda: self.a() * self.E(),
+                            src=self.E, dest=self.I)
+        self.Fir = pcm.Flow(lambda: self.g() * self.I(),
+                            src=self.I, dest=self.R)
 
         # Output
         self._set_output('S', 'E', 'I', 'R')
@@ -163,11 +169,11 @@ mgr.run(m, duration=150, label='My run')
 
 # Plot results
 plt = pcm.Plotter(title='SEIR Time Series', ylabel='Population', fontsize=14)
-plt.plot(mgr['My run'],'S', color='blue', label = 'S')
-plt.plot(mgr['My run'],'E', color='red', label = 'E')
-plt.plot(mgr['My run'],'I', color='orange', label = 'I')
-plt.plot(mgr['My run'],'R', color='green', label = 'R')
-plt.plot(mgr['My run'],'S + I + R', color='black', label = 'Total')
+plt.plot(mgr['My run'], 'S', color='blue', label='S')
+plt.plot(mgr['My run'], 'E', color='red', label='E')
+plt.plot(mgr['My run'], 'I', color='orange', label='I')
+plt.plot(mgr['My run'], 'R', color='green', label='R')
+plt.plot(mgr['My run'], 'S + I + R', color='black', label='Total')
 
 ```
 
@@ -203,8 +209,12 @@ class MonteCarloSIR(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(
+                lambda: rng.binomial(self.S(), self.b() * self.I() / self.N()),
+                src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(
+                lambda: rng.binomial(self.I(), self.g()),
+                src=self.I, dest=self.R)
 
         # Output
         self._set_output('S','I','R')
@@ -227,11 +237,13 @@ mgr.run_mc(m2, duration=150, reps=100, label='My run - mc')
 We can plot the results of a Monte Carlo run using the plotter's *plot_mc* function. The optional *interval* parameter specifies the percentile range from the distribution of outputs to be displayed. An interval of 50 means the middle 50% of the distribution, or the inter-quartile range. An interval of 90 would display the region from the 5th to 95th percentile.
 
 ```Python
-plt = pcm.Plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mc'],'S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mc'],'I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mc'],'R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mc'],'S + I + R', color='black', interval=50, label = 'Total')
+plt = pcm.Plotter(title='SIR Time Series - Monte Carlo', ylabel='Population',
+                  fontsize=14)
+plt.plot_mc(mgr['My run - mc'], 'S', color='blue', interval=50, label='S')
+plt.plot_mc(mgr['My run - mc'], 'I', color='orange', interval=50, label='I')
+plt.plot_mc(mgr['My run - mc'], 'R', color='green', interval=50, label='R')
+plt.plot_mc(mgr['My run - mc'], 'S + I + R', color='black', interval=50,
+            label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125520231-accec0af-5762-4c4e-9002-7b179df6089f.png)
@@ -253,8 +265,16 @@ class MixSIR(pcm.Model):
         self.b_mix = pcm.Parameter()
 
         # Cross-infection flows
-        self.Fsi_GrpA = pcm.Flow(lambda: rng.binomial(self.GrpA.S(), self.b_mix()*self.GrpB.I()/self.GrpB.N()), src=self.GrpA.S, dest=self.GrpA.I)
-        self.Fsi_GrpB = pcm.Flow(lambda: rng.binomial(self.GrpB.S(), self.b_mix()*self.GrpA.I()/self.GrpA.N()), src=self.GrpB.S, dest=self.GrpB.I)
+        self.Fsi_GrpA = pcm.Flow(
+                lambda: rng.binomial(self.GrpA.S(),
+                                     self.b_mix() * self.GrpB.I()
+                                                  / self.GrpB.N()),
+                src=self.GrpA.S, dest=self.GrpA.I)
+        self.Fsi_GrpB = pcm.Flow(
+                lambda: rng.binomial(self.GrpB.S(),
+                                     self.b_mix() * self.GrpA.I()
+                                                  / self.GrpA.N()),
+                src=self.GrpB.S, dest=self.GrpB.I)
 
         # Output
         self._set_output('GrpA','GrpB')
@@ -267,14 +287,15 @@ In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined 
 While *GrpA* and *GrpB* are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is often preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a Python dictionary. For the *MixSIR* model, above, the initialization dictionary would look something like *init_mix* below.
 
 ```Python
-init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}
-init_GrpB = {'S':30, 'I':0, 'R':0, 'b_m':0.3, 'b_s':0.05, 'g':0.1}
-init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}
+init_GrpA = {'S': 95, 'I': 5, 'R': 0, 'b_m': 0.2, 'b_s': 0.05, 'g': 0.1}
+init_GrpB = {'S': 30, 'I': 0, 'R': 0, 'b_m': 0.3, 'b_s': 0.05, 'g': 0.1}
+init_mix = {'b_mix': 0.05, 'GrpA': init_GrpA, 'GrpB': init_GrpB,
+            '_reps': 100, '_end': 150}
 ```
 
-The dictionary keys are the names of the model elements, and the dictionary values are used to initialize that element. The only model elements that accept input are pools, parameters, and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is a constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, `init_GrpA = {'S':95, 'I':5, 'R':0, 'b_m':0.2, 'b_s':0.05, 'g':0.1}`. Hence, nested models are initialized with equivalently nested dictionaries. In this example, *GrpA* is given the same initialization values as in the *MonteCarloSIR* model while *GrpB* is a smaller population (size 30) with a higher mean transmission rate, but with no initial infections.
+The dictionary keys are the names of the model elements, and the dictionary values are used to initialize that element. The only model elements that accept input are pools, parameters, and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is a constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, `init_GrpA = {'S': 95, 'I': 5, 'R': 0, 'b_m': 0.2, 'b_s': 0.05, 'g': 0.1}`. Hence, nested models are initialized with equivalently nested dictionaries. In this example, *GrpA* is given the same initialization values as in the *MonteCarloSIR* model while *GrpB* is a smaller population (size 30) with a higher mean transmission rate, but with no initial infections.
 
-The top-level initialization dictionary, `init_mix = {'b_mix':0.05, 'GrpA':init_GrpA, 'GrpB':init_GrpB, '_reps':100, '_end':150}`, can also contain some special entries to control the model run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
+The top-level initialization dictionary, `init_mix = {'b_mix': 0.05, 'GrpA': init_GrpA, 'GrpB': init_GrpB, '_reps': 100, '_end': 150}`, can also contain some special entries to control the model run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
 
 We can then perform a run using the dictionary to initialize the model.
 
@@ -285,11 +306,16 @@ mgr.run_mc(m3, init=init_mix, label='My run - mix')
 And we can then plot what happens to *GrpA*.
 
 ```Python
-plt = pcm.Plotter(title='SIR Time Series - Monte Carlo - GrpA', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mix'],'GrpA.S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mix'],'GrpA.I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mix'],'GrpA.R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', interval=50, label = 'Total')
+plt = pcm.Plotter(title='SIR Time Series - Monte Carlo - GrpA',
+                  ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mix'], 'GrpA.S', color='blue',
+            interval=50, label='S')
+plt.plot_mc(mgr['My run - mix'], 'GrpA.I', color='orange',
+            interval=50, label='I')
+plt.plot_mc(mgr['My run - mix'], 'GrpA.R', color='green',
+            interval=50, label='R')
+plt.plot_mc(mgr['My run - mix'], 'GrpA.S + GrpA.I + GrpA.R', color='black',
+            interval=50, label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125534046-615c52ce-7740-432c-ac19-3d233a9dda32.png)
@@ -297,11 +323,16 @@ plt.plot_mc(mgr['My run - mix'],'GrpA.S + GrpA.I + GrpA.R', color='black', inter
 And *GrpB*.
 
 ```Python
-plt = pcm.Plotter(title='SIR Time Series - Monte Carlo - GrpB', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mix'],'GrpB.S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mix'],'GrpB.I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mix'],'GrpB.R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mix'],'GrpB.S + GrpB.I + GrpB.R', color='black', interval=50, label = 'Total')
+plt = pcm.Plotter(title='SIR Time Series - Monte Carlo - GrpB',
+                  ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mix'], 'GrpB.S', color='blue',
+            interval=50, label='S')
+plt.plot_mc(mgr['My run - mix'], 'GrpB.I', color='orange',
+            interval=50, label='I')
+plt.plot_mc(mgr['My run - mix'], 'GrpB.R', color='green',
+            interval=50, label='R')
+plt.plot_mc(mgr['My run - mix'], 'GrpB.S + GrpB.I + GrpB.R', color='black',
+            interval=50, label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/125534082-e84971f1-3436-4dda-b431-31ae293f42ba.png)
@@ -369,12 +400,14 @@ class ModSIR(pcm.Model):
         self.N = pcm.Equation(lambda: self.S() + self.I() + self.R())
 
         # Parameters
-        self.b = pcm.Equation(lambda: 0.2*(0.98)**self._t())
+        self.b = pcm.Equation(lambda: 0.2 * (0.98)**self._t())
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: self.b()*self.I()*self.S()/self.N(), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: self.g()*self.I(), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(lambda: self.b() * self.I() * self.S() / self.N(),
+                            src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(lambda: self.g() * self.I(),
+                            src=self.I, dest=self.R)
 
         # Output
         self._set_output('S', 'I', 'R', 'b')
@@ -387,8 +420,9 @@ Note that the current simulation time can be accessed by calling the special var
 ```Python
 mgr.run(m4, duration=150, label='Mod SIR')
 
-plt = pcm.Plotter(title='Dynamic transmission rate', ylabel='Value', fontsize=14)
-plt.plot(mgr['Mod SIR'],'b', color='blue', label = 'Transmission rate')
+plt = pcm.Plotter(title='Dynamic transmission rate',
+                  ylabel='Value', fontsize=14)
+plt.plot(mgr['Mod SIR'], 'b', color='blue', label='Transmission rate')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/126204950-020d616b-22a4-45b7-94fd-88c2fcbd1108.png)
@@ -419,7 +453,8 @@ self.b = pcm.Step(self.b_v(), self.b_t())
 The initialization dictionary for this model would then specify lists for the values of *b_v* and *b_t*.
 
 ```Python
-init_mod = {'S':95, 'I':5, 'R':0, 'b_v':[0.2, 0.13, 0.2], 'b_t':[0, 7, 21], 'g':0.1}
+init_mod = {'S': 95, 'I': 5, 'R': 0, 'b_v': [0.2, 0.13, 0.2],
+            'b_t': [0, 7, 21], 'g': 0.1}
 ```
 
 If we create an Excel initialization file for this model, we will see two vector inputs for the parameters *b_v* and *b_t*.
@@ -470,12 +505,18 @@ class MonteCarloSIR2(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(
+                lambda: rng.binomial(self.S(), 
+                                     self.b() * self.I() / self.N()),
+                src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(
+                lambda: rng.binomial(self.I(), self.g()),
+                src=self.I, dest=self.R)
 
         # Initial flow
         self.Pi = pcm.Parameter(0.05)
-        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()),
+                                 src=self.S, dest=self.I, init=True)
 
         # Output
         self._set_output('S','I','R')
@@ -490,11 +531,16 @@ If we run this model, we can see that the initial state of the system is now unc
 ```Python
 mgr.run_mc(m5, duration=150, reps=100, label='My run - mc2')
 
-plt = pcm.Plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - mc2'],'S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - mc2'],'I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - mc2'],'R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - mc2'],'S + I + R', color='black', interval=50, label = 'Total')
+plt = pcm.Plotter(title='SIR Time Series - Monte Carlo',
+                  ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - mc2'], 'S', color='blue',
+                interval=50, label='S')
+plt.plot_mc(mgr['My run - mc2'], 'I', color='orange',
+                interval=50, label='I')
+plt.plot_mc(mgr['My run - mc2'], 'R', color='green',
+                interval=50, label='R')
+plt.plot_mc(mgr['My run - mc2'], 'S + I + R', color='black',
+                interval=50, label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/126559095-829eb933-08dc-442d-8e4e-60278e04e676.png)
@@ -527,12 +573,17 @@ class VecSIR(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(
+                lambda: rng.binomial(self.S(), self.b() * self.I() / self.N()),
+                src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(
+                lambda: rng.binomial(self.I(), self.g()),
+                src=self.I, dest=self.R)
 
         # Initial flow
         self.Pi = pcm.Parameter(0.05)
-        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()),
+                                 src=self.S, dest=self.I, init=True)
 
         # Output
         self._set_output('S','I','R')
@@ -545,11 +596,16 @@ If we plot the result, we can see the protective effect of dividing the populati
 ```Python
 mgr.run_mc(m6, duration=150, reps=100, label='My run - vec')
 
-plt = pcm.Plotter(title='SIR Time Series - Monte Carlo', ylabel='Population', fontsize=14)
-plt.plot_mc(mgr['My run - vec'],'S', color='blue', interval=50, label = 'S')
-plt.plot_mc(mgr['My run - vec'],'I', color='orange', interval=50, label = 'I')
-plt.plot_mc(mgr['My run - vec'],'R', color='green', interval=50, label = 'R')
-plt.plot_mc(mgr['My run - vec'],'S + I + R', color='black', interval=50, label = 'Total')
+plt = pcm.Plotter(title='SIR Time Series - Monte Carlo',
+                  ylabel='Population', fontsize=14)
+plt.plot_mc(mgr['My run - vec'], 'S', color='blue',
+            interval=50, label='S')
+plt.plot_mc(mgr['My run - vec'], 'I', color='orange',
+            interval=50, label='I')
+plt.plot_mc(mgr['My run - vec'], 'R', color='green',
+            interval=50, label='R')
+plt.plot_mc(mgr['My run - vec'], 'S + I + R', color='black',
+            interval=50, label='Total')
 ```
 
 ![image](https://user-images.githubusercontent.com/86741975/126799974-76c533de-726e-4569-9e7b-e32c3717a3ac.png)
@@ -578,16 +634,25 @@ class VecSIR(pcm.Model):
         self.g = pcm.Parameter(0.1)
 
         # Flows
-        self.Fsi = pcm.Flow(lambda: rng.binomial(self.S(), self.b()*self.I()/self.N()), src=self.S, dest=self.I)
-        self.Fir = pcm.Flow(lambda: rng.binomial(self.I(), self.g()), src=self.I, dest=self.R)
+        self.Fsi = pcm.Flow(
+                lambda: rng.binomial(self.S(), self.b() * self.I() / self.N()),
+                src=self.S, dest=self.I)
+        self.Fir = pcm.Flow(
+                lambda: rng.binomial(self.I(), self.g()),
+                src=self.I, dest=self.R)
 
         # Initial flow
         self.Pi = pcm.Parameter(0.05)
-        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()), src=self.S, dest=self.I, init=True)
+        self.Fsi_init = pcm.Flow(lambda: rng.binomial(self.S(), self.Pi()),
+                                 src=self.S, dest=self.I, init=True)
 
         # Mixing
         self.b_mix = pcm.Parameter(0.02)
-        self.Fsi_mix = pcm.Flow(lambda: rng.binomial(self.S(), self.b_mix()*self.I().sum()/self.N().sum()), src=self.S, dest=self.I)
+        self.Fsi_mix = pcm.Flow(
+                lambda: rng.binomial(self.S(),
+                                     self.b_mix() * self.I().sum()
+                                                  / self.N().sum()),
+                src=self.S, dest=self.I)
 
         # Output
         self._set_output('S','I','R')
