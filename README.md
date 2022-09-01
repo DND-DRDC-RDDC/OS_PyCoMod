@@ -400,7 +400,7 @@ class ModSIR(pcm.Model):
         self.N = pcm.Equation(lambda: self.S() + self.I() + self.R())
 
         # Parameters
-        self.b = pcm.Equation(lambda: 0.2 * (0.98)**self._t())
+        self.b = pcm.Equation(lambda: 0.2 * (0.98)**self.t())
         self.g = pcm.Parameter(0.1)
 
         # Flows
@@ -415,7 +415,7 @@ class ModSIR(pcm.Model):
 m4 = ModSIR()
 ```
 
-Note that the current simulation time can be accessed by calling the special variable *self._t*. We can view the modified transmission rate over time by adding *b* to the list of outputs, running the model and then plotting it.
+Note that the current simulation time can be accessed by calling the special variable *self.t*. We can view the modified transmission rate over time by adding *b* to the list of outputs, running the model and then plotting it.
 
 ```Python
 mgr.run(m4, duration=150, label='Mod SIR')

@@ -12,8 +12,8 @@ class Model(ABC):
     def __init__(self, init=None):
 
         # Time info
-        self._t = SimTime()
-        self._date = SimDate()
+        self.t = SimTime()
+        self.date = SimDate()
 
         # Run info
         self._dt = RunInfo(1)
@@ -168,8 +168,8 @@ class Model(ABC):
 
         # Add special settings to top level init
         if key == 'init':
-            d[key]['_t'] = [self._t()]
-            d[key]['_date'] = [self._date()]
+            d[key]['t'] = [self.t()]
+            d[key]['date'] = [self.date()]
             d[key]['_dt'] = [self._dt()]
             d[key]['_end'] = [self._end()]
             d[key]['_reps'] = [self._reps()]
@@ -255,7 +255,7 @@ class Model(ABC):
 
         # Update equations (in order)
         for e in self._equations:
-            e.update(self._t(), self._dt())
+            e.update(self.t(), self._dt())
             e.save_hist(passno)
 
     def _update_init_flows(self, passno=1):
@@ -301,11 +301,11 @@ class Model(ABC):
             m._update_time(passno)
 
         # Update time info
-        self._t.update(self._dt())
-        self._t.save_hist(passno)
+        self.t.update(self._dt())
+        self.t.save_hist(passno)
 
-        self._date.update(self._dt())
-        self._date.save_hist(passno)
+        self.date.update(self._dt())
+        self.date.save_hist(passno)
 
     # Regular update sequence
     def _update_regular(self):
@@ -422,8 +422,8 @@ class Model(ABC):
         for m in self._models:
             m._reset_time()
 
-        self._t.reset()
-        self._date.reset()
+        self.t.reset()
+        self.date.reset()
 
     def _reset_output(self):
         self._output = None

@@ -96,8 +96,8 @@ class RunManager:
             run_data['output_mc'] = model._output_mc
 
         run_data['reps'] = reps
-        run_data['x_times'] = model._t.value_hist
-        run_data['x_dates'] = model._date.value_hist
+        run_data['x_times'] = model.t.value_hist
+        run_data['x_dates'] = model.date.value_hist
 
         self.runs[label] = run_data
 
