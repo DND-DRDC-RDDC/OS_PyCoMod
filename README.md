@@ -555,9 +555,9 @@ For example, we can vectorize the *MonteCarloSIR2* model from the previous secti
 class VecSIR(pcm.Model):
     def build(self):
         # Pools
-        self.S = pcm.Pool([10]*10)
-        self.I = pcm.Pool([0]*10)
-        self.R = pcm.Pool([0]*10)
+        self.S = pcm.Pool([10] * 10)
+        self.I = pcm.Pool([0] * 10)
+        self.R = pcm.Pool([0] * 10)
 
         # Equations
         self.N = pcm.Equation(lambda: self.S() + self.I() + self.R())
@@ -616,9 +616,9 @@ However, it is usually not realistic to assume that populations are perfectly is
 class VecSIR(pcm.Model):
     def build(self):
         # Pools
-        self.S = pcm.Pool([10]*10)
-        self.I = pcm.Pool([0]*10)
-        self.R = pcm.Pool([0]*10)
+        self.S = pcm.Pool([10] * 10)
+        self.I = pcm.Pool([0] * 10)
+        self.R = pcm.Pool([0] * 10)
 
         # Equations
         self.N = pcm.Equation(lambda: self.S() + self.I() + self.R())
