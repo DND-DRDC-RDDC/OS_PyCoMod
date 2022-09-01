@@ -163,6 +163,7 @@ class SimpleSEIR(pcm.Model):
         # Output
         self.set_output('S', 'E', 'I', 'R')
 
+
 # Instantiate model
 m = SimpleSEIR()
 
@@ -221,6 +222,7 @@ class MonteCarloSIR(pcm.Model):
 
         # Output
         self.set_output('S','I','R')
+
 
 m2 = MonteCarloSIR()
 ```
@@ -282,6 +284,7 @@ class MixSIR(pcm.Model):
 
         # Output
         self.set_output('GrpA','GrpB')
+
 
 m3 = MixSIR()
 ```
@@ -417,6 +420,7 @@ class ModSIR(pcm.Model):
         # Output
         self.set_output('S', 'I', 'R', 'b')
 
+
 m4 = ModSIR()
 ```
 
@@ -527,6 +531,7 @@ class MonteCarloSIR2(pcm.Model):
         # Output
         self.set_output('S','I','R')
 
+
 m5 = MonteCarloSIR2()
 ```
 
@@ -594,6 +599,7 @@ class VecSIR(pcm.Model):
 
         # Output
         self.set_output('S','I','R')
+
 
 m6 = VecSIR()
 ```
@@ -664,6 +670,7 @@ class VecSIR(pcm.Model):
 
         # Output
         self.set_output('S','I','R')
+
 
 m6 = VecSIR()
 ```
