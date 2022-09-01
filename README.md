@@ -70,7 +70,7 @@ Given a population of size 100, where 5 individuals are infected (I) and the rem
 
 ```python
 class SimpleSIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool(95)
         self.I = pcm.Pool(5)
@@ -90,10 +90,10 @@ class SimpleSIR(pcm.Model):
                             src=self.I, dest=self.R)
 
         # Output
-        self._set_output('S', 'I', 'R')
+        self.set_output('S', 'I', 'R')
 ```
 
-The first two lines begin the definition of a custom class inheriting properties from the PyCoMod *Model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using the PyCoMod *Pool* class and specify the initial value of each pool. We define the value *N* (the total population) as a PyCoMod *Equation*. Equations are defined by a function referencing other model elements; lambda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by `self.S()`. Using the PyCoMod *Parameter* class we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using PyCoMod's *flow* class; flows are defined by a function, similar to the *Equation* class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. `src=self.S`, not `src=self.S()`). A final step in specifying the model is to let PyCoMod know which outputs we want to capture for analysis. This is done by calling the model's *_set_output* method and providing the names of the model elements that we want to track.
+The first two lines begin the definition of a custom class inheriting properties from the PyCoMod *Model* class and overrides the model's *_build* function to define the elements of this simple SIR model. In this case, we create the three population compartments (S,I,R) using the PyCoMod *Pool* class and specify the initial value of each pool. We define the value *N* (the total population) as a PyCoMod *Equation*. Equations are defined by a function referencing other model elements; lambda functions are syntactically compact for this purpose. To obtain the value of a model element, we call the object by adding open and close parentheses *( )*; for example, the current number of susceptible individuals is obtained by `self.S()`. Using the PyCoMod *Parameter* class we create and specify values for the model's parameters: transmission rate, *b*, and recovery rate, *g*. Next, we define the movement between the compartments using PyCoMod's *flow* class; flows are defined by a function, similar to the *Equation* class. In this case, the flow functions correspond to the rate equations, *Fsi* and *Fir*, defined above. Flows must also specify a source pool and a destination pool. Note that when specifying source and destination pools, we reference the pool object itself rather than calling it (e.g. `src=self.S`, not `src=self.S()`). A final step in specifying the model is to let PyCoMod know which outputs we want to capture for analysis. This is done by calling the model's *set_output* method and providing the names of the model elements that we want to track.
 
 Having defined the *SimpleSIR* model class, we can now create an instance of it, let's call it *m*.
 
@@ -125,7 +125,7 @@ plt.plot(mgr['My run'], 'S + I + R', color='black', label='Total')
 
 ![image](https://user-images.githubusercontent.com/86741975/125519680-4f964905-8c1b-4565-acf9-fac73ea403f4.png)
 
-Each call to the plotter's *plot* method must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *_set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
+Each call to the plotter's *plot* method must specify a run and an output. The run is identified by indexing the run manager with the label that we specified when we ran the model. The output must be one of the outputs that was specified in the model using *set_output*. Outputs can be summed together in a plot, e.g. *S + I + R* in the last line, above.
 
 Note that the examples that follow are meant to provide simple demonstrations of the features of PyCoMod; they are not necessarily appropriate models for real situations.
 
@@ -134,7 +134,7 @@ To incorporate additional model elemets, such as compartments, parameters, or ra
 
 ```python
 class SimpleSEIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool(95)
         self.E = pcm.Pool(0)
@@ -159,7 +159,7 @@ class SimpleSEIR(pcm.Model):
                             src=self.I, dest=self.R)
 
         # Output
-        self._set_output('S', 'E', 'I', 'R')
+        self.set_output('S', 'E', 'I', 'R')
 
 # Instantiate model
 m = SimpleSEIR()
@@ -189,7 +189,7 @@ import numpy as np
 rng = np.random.default_rng()
 
 class MonteCarloSIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool(95)
         self.I = pcm.Pool(5)
@@ -217,7 +217,7 @@ class MonteCarloSIR(pcm.Model):
                 src=self.I, dest=self.R)
 
         # Output
-        self._set_output('S','I','R')
+        self.set_output('S','I','R')
 
 m2 = MonteCarloSIR()
 ```
@@ -255,7 +255,7 @@ PyCoMod models support nesting, so any PyCoMod model can be used as an element i
 
 ```Python
 class MixSIR(pcm.Model):
-    def _build(self):
+    def build(self):
 
         # Sub models
         self.GrpA = MonteCarloSIR()
@@ -277,12 +277,12 @@ class MixSIR(pcm.Model):
                 src=self.GrpB.S, dest=self.GrpB.I)
 
         # Output
-        self._set_output('GrpA','GrpB')
+        self.set_output('GrpA','GrpB')
 
 m3 = MixSIR()
 ```
 
-In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *MonteCarloSIR* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *MixSIR* model and initialized below. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list: `self._set_output('GrpA','GrpB')`; then all elements of the sub-model will be accessible when plotting.
+In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *MonteCarloSIR* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *MixSIR* model and initialized below. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list: `self.set_output('GrpA','GrpB')`; then all elements of the sub-model will be accessible when plotting.
 
 While *GrpA* and *GrpB* are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is often preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a Python dictionary. For the *MixSIR* model, above, the initialization dictionary would look something like *init_mix* below.
 
@@ -370,7 +370,7 @@ Because *GrpA* and *GrpB* are sub-models, the value under these labels is the na
 
 ![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
 
-The same applies to the *GrpB* sub-model. Each tab also contains an *_out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *_set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
+The same applies to the *GrpB* sub-model. Each tab also contains an *_out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
 
 We can edit the values in the Excel file, for example, by changing b_mix to 0.025 (cutting the transmission rate between the two populations in half) and then save it.
 
@@ -390,7 +390,7 @@ It is often necessary to adjust model parameters over time. In general this can 
 
 ```Python
 class ModSIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool(95)
         self.I = pcm.Pool(5)
@@ -410,7 +410,7 @@ class ModSIR(pcm.Model):
                             src=self.I, dest=self.R)
 
         # Output
-        self._set_output('S', 'I', 'R', 'b')
+        self.set_output('S', 'I', 'R', 'b')
 
 m4 = ModSIR()
 ```
@@ -485,7 +485,7 @@ In some cases, it may be useful to incorporate flows into establishing the initi
 
 ```Python
 class MonteCarloSIR2(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool(100)
         self.I = pcm.Pool(0)
@@ -519,7 +519,7 @@ class MonteCarloSIR2(pcm.Model):
                                  src=self.S, dest=self.I, init=True)
 
         # Output
-        self._set_output('S','I','R')
+        self.set_output('S','I','R')
 
 m5 = MonteCarloSIR2()
 ```
@@ -553,7 +553,7 @@ For example, we can vectorize the *MonteCarloSIR2* model from the previous secti
 
 ```Python
 class VecSIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool([10]*10)
         self.I = pcm.Pool([0]*10)
@@ -586,7 +586,7 @@ class VecSIR(pcm.Model):
                                  src=self.S, dest=self.I, init=True)
 
         # Output
-        self._set_output('S','I','R')
+        self.set_output('S','I','R')
 
 m6 = VecSIR()
 ```
@@ -614,7 +614,7 @@ However, it is usually not realistic to assume that populations are perfectly is
 
 ```Python
 class VecSIR(pcm.Model):
-    def _build(self):
+    def build(self):
         # Pools
         self.S = pcm.Pool([10]*10)
         self.I = pcm.Pool([0]*10)
@@ -655,7 +655,7 @@ class VecSIR(pcm.Model):
                 src=self.S, dest=self.I)
 
         # Output
-        self._set_output('S','I','R')
+        self.set_output('S','I','R')
 
 m6 = VecSIR()
 ```

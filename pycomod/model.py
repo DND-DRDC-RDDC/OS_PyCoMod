@@ -41,17 +41,17 @@ class Model(ABC):
         self._has_priority = False
 
         # Setup
-        self._build()
+        self.build()
         self._register()
         self._check_priority()
         if init is not None:
             self._init_cond(init)
 
-    def _set_output(self, *args):
+    def set_output(self, *args):
         self._out = list(args)
 
     @abstractmethod
-    def _build(self):
+    def build(self):
         # Implemented by sub-class
         pass
 
