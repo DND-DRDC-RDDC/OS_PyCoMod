@@ -189,7 +189,7 @@ class Model(ABC):
         return d
 
     # Write an excel file containing initial conditions for the model
-    def _write_excel_init(self, filename=None):
+    def write_excel_init(self, filename=None):
         d = self._get_init_df()
 
         if filename is None:
