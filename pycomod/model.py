@@ -13,13 +13,13 @@ class Model(ABC):
     def __init__(self, init=None):
 
         # Time info
-        self.t = SimTime()
-        self.date = SimDate()
+        self._t = SimTime()
+        self._date = SimDate()
 
         # Run info
-        self.dt = RunInfo(1)
-        self.end = RunInfo(365)
-        self.reps = RunInfo(100)
+        self._dt = RunInfo(1)
+        self._end = RunInfo(365)
+        self._reps = RunInfo(100)
 
         # Model elements
         self._parameters = []
@@ -34,7 +34,7 @@ class Model(ABC):
         self._models = []
 
         # Output
-        self.out = None  # Elements to track for output
+        self._out = None  # Elements to track for output
         self._output = None  # Output from run
         self._output_mc = None  # Output from mc runs
 
@@ -48,8 +48,33 @@ class Model(ABC):
         if init is not None:
             self._init_cond(init)
 
+    # Read-only properties
+    @property
+    def t(self):
+        return self._t
+
+    @property
+    def date(self):
+        return self._date
+
+    @property
+    def dt(self):
+        return self._dt
+
+    @property
+    def end(self):
+        return self._end
+
+    @property
+    def reps(self):
+        return self._reps
+
+    @property
+    def out(self):
+        return self._out
+
     def set_output(self, *args):
-        self.out = list(args)
+        self._out = list(args)
 
     @abstractmethod
     def build(self):
@@ -100,7 +125,7 @@ class Model(ABC):
         for key, value in init.items():
             if key == 'out':
                 # Store elements of this model to be tracked for output
-                self.out = value
+                self._out = value
             elif key in ['dt', 't', 'end', 'date', 'reps']:
                 # If time and run info, push init to submodels
                 self._push_init(key, value)
