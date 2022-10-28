@@ -22,7 +22,7 @@ def read_excel_init(file, sheet=None):
         v = [x for x in df[c] if not pd.isna(x)]
 
         # If it's the output tracking list
-        if c == '_out':
+        if c == 'out':
             init[c] = v
 
         # If a single value
@@ -81,7 +81,7 @@ class RunManager:
         # Get reps from param or from init
         if reps is None:
             try:
-                reps = init['_reps']
+                reps = init['reps']
             except KeyError:
                 reps = 100
 

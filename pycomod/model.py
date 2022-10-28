@@ -17,9 +17,9 @@ class Model(ABC):
         self.date = SimDate()
 
         # Run info
-        self._dt = RunInfo(1)
-        self._end = RunInfo(365)
-        self._reps = RunInfo(100)
+        self.dt = RunInfo(1)
+        self.end = RunInfo(365)
+        self.reps = RunInfo(100)
 
         # Model elements
         self._parameters = []
@@ -34,7 +34,7 @@ class Model(ABC):
         self._models = []
 
         # Output
-        self._out = None  # Elements to track for output
+        self.out = None  # Elements to track for output
         self._output = None  # Output from run
         self._output_mc = None  # Output from mc runs
 
@@ -49,7 +49,7 @@ class Model(ABC):
             self._init_cond(init)
 
     def set_output(self, *args):
-        self._out = list(args)
+        self.out = list(args)
 
     @abstractmethod
     def build(self):
@@ -98,10 +98,10 @@ class Model(ABC):
     def _init_cond(self, init):
         # Recursively apply initial conditions
         for key, value in init.items():
-            if key == '_out':
+            if key == 'out':
                 # Store elements of this model to be tracked for output
-                self._out = value
-            elif key in ['_dt', '_t', '_end', '_date', '_reps']:
+                self.out = value
+            elif key in ['dt', 't', 'end', 'date', 'reps']:
                 # If time and run info, push init to submodels
                 self._push_init(key, value)
             else:
@@ -162,18 +162,18 @@ class Model(ABC):
                     d[key][k] = [v()]
 
         # Add output tracking
-        if self._out is None:
-            d[key]['_out'] = [None]
+        if self.out is None:
+            d[key]['out'] = [None]
         else:
-            d[key]['_out'] = self._out
+            d[key]['out'] = self.out
 
         # Add special settings to top level init
         if key == 'init':
             d[key]['t'] = [self.t()]
             d[key]['date'] = [self.date()]
-            d[key]['_dt'] = [self._dt()]
-            d[key]['_end'] = [self._end()]
-            d[key]['_reps'] = [self._reps()]
+            d[key]['dt'] = [self.dt()]
+            d[key]['end'] = [self.end()]
+            d[key]['reps'] = [self.reps()]
 
         # Get max num rows
         rows = max([len(x) for x in d[key].values()])
@@ -256,7 +256,7 @@ class Model(ABC):
 
         # Update equations (in order)
         for e in self._equations:
-            e.update(self.t(), self._dt())
+            e.update(self.t(), self.dt())
             e.save_hist(passno)
 
     def _update_init_flows(self, passno=1):
@@ -267,7 +267,7 @@ class Model(ABC):
 
         # Update init flows (order independent)
         for e in self._init_flows:
-            e.update(self._dt())
+            e.update(self.dt())
         for e in self._init_flows:
             e.save_hist(passno)
 
@@ -279,7 +279,7 @@ class Model(ABC):
 
         # Update priority flows (order independent)
         for e in self._priority_flows:
-            e.update(self._dt())
+            e.update(self.dt())
         for e in self._priority_flows:
             e.save_hist(passno)
 
@@ -291,7 +291,7 @@ class Model(ABC):
 
         # Update priority flows (order independent)
         for e in self._flows:
-            e.update(self._dt())
+            e.update(self.dt())
         for e in self._flows:
             e.save_hist(passno)
 
@@ -302,10 +302,10 @@ class Model(ABC):
             m._update_time(passno)
 
         # Update time info
-        self.t.update(self._dt())
+        self.t.update(self.dt())
         self.t.save_hist(passno)
 
-        self.date.update(self._dt())
+        self.date.update(self.dt())
         self.date.save_hist(passno)
 
     # Regular update sequence
@@ -458,7 +458,7 @@ class Model(ABC):
     # Save all output
     def _save_output(self):
         self._output = {}
-        for key in self._out:
+        for key in self.out:
             e = getattr(self, key)
 
             if isinstance(e, BuildingBlock):
@@ -478,19 +478,19 @@ class Model(ABC):
 
         # Override for any of the following run parameters
         if end is not None:
-            self._push_init('_end', end)
+            self._push_init('end', end)
 
         if dt is not None:
-            self._push_init('_dt', dt)
+            self._push_init('dt', dt)
 
         if start_time is not None:
-            self._push_init('_t', start_time)
+            self._push_init('t', start_time)
 
         if start_date is not None:
-            self._push_init('_date', start_date)
+            self._push_init('date', start_date)
 
         # Number of sim steps
-        n = int(self._end()/self._dt())
+        n = int(self.end()/self.dt())
 
         # Reset after applying initial conditions
         self._reset()
@@ -539,24 +539,24 @@ class Model(ABC):
 
         # Override for any of the following run parameters
         if reps is not None:
-            self._push_init('_reps', reps)
+            self._push_init('reps', reps)
 
         if end is not None:
-            self._push_init('_end', end)
+            self._push_init('end', end)
 
         if dt is not None:
-            self._push_init('_dt', dt)
+            self._push_init('dt', dt)
 
         if start_time is not None:
-            self._push_init('_t', start_time)
+            self._push_init('t', start_time)
 
         if start_date is not None:
-            self._push_init('_date', start_date)
+            self._push_init('date', start_date)
 
         # Reset mc output
         self._reset_output_mc()
 
         # Run all reps and save mc output
-        for n in range(int(self._reps())):
+        for n in range(int(self.reps())):
             self._run()
             self._save_output_mc()
