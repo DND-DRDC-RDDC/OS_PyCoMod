@@ -214,9 +214,70 @@ class Model(ABC):
 
         return d
 
+    # Get dataframes representing initial conditions for the model
+    def _get_init_df2(self, d=None, key=None):
+
+        self._reset()
+
+        # If this is the root, create the dict and add run settings
+        if d is None:
+            d = {}
+            
+            # Add run settings
+            d['run'] = {}
+            d['run']['t'] = [self.t()]
+            d['run']['date'] = [self.date()]
+            d['run']['dt'] = [self.dt()]
+            d['run']['end'] = [self.end()]
+            d['run']['reps'] = [self.reps()]
+            
+            d['run'] = pd.DataFrame.from_dict(d['run'])
+
+        # If this is the root, set the key to 'model' 
+        if key is None:
+            key = 'model'
+
+        # Create dict
+        d[key] = {}
+
+        # Add all elements to the dict
+        elements = [(k, v) for k, v in self.__dict__.items()
+                    if isinstance(v, (Pool, Parameter, Model))]
+        for k, v in elements:
+            if isinstance(v, Model):
+                next_key = key + '.' + k
+                d[key][k] = [next_key]
+                v._get_init_df(d, next_key)
+            else:
+                if type(v()) == np.ndarray:
+                    d[key][k] = v()
+                else:
+                    d[key][k] = [v()]
+
+        # Add output tracking
+        if self.out is None:
+            d[key]['out'] = [None]
+        else:
+            d[key]['out'] = self.out
+
+        # Get max num rows
+        rows = max([len(x) for x in d[key].values()])
+
+        # Normalize column lengths
+        for k in d[key].keys():
+            add = rows - len(d[key][k])
+            if add > 0:
+                d[key][k] = np.append(d[key][k], [None]*add)
+
+        # Convert to dataframe
+        d[key] = pd.DataFrame.from_dict(d[key])
+
+        return d
+      
+      
     # Write an excel file containing initial conditions for the model
     def write_excel_init(self, filename=None):
-        d = self._get_init_df()
+        d = self._get_init_df2()
 
         if filename is None:
             filename = 'init.xlsx'
