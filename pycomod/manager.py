@@ -64,8 +64,7 @@ def read_excel_init2(file, sheet=None):
     if df_run is not None:
         for c in df_run.columns:
             # Get raw column as list, removing nans
-            v = [x for x in df[c] if not pd.isna(x)]
-            init[c] = v
+            init[c] = df[c][0]
     
     # get model params
     for c in df.columns:
