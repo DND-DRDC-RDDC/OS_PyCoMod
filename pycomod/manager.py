@@ -21,12 +21,17 @@ def read_excel_init(file, sheet=None):
         df = file[sheet]
 
     init = {}
+    init_return = init
     
     # if first pass, get run params
     if df_run is not None:
+        init['run'] = {}
         for c in df_run.columns:
             # Get raw column as list, removing nans
-            init[c] = df_run[c][0]
+            init['run'][c] = df_run[c][0]
+            
+        init['model'] = {}
+        init = init['model']
     
     # get model params
     for c in df.columns:
@@ -49,7 +54,7 @@ def read_excel_init(file, sheet=None):
         else:
             init[c] = v
 
-    return init
+    return init_return
 
 
 # Class for running models and saving results
