@@ -593,7 +593,7 @@ class Model(ABC):
                 start_time=None, start_date=None, init=None):
         # First apply initial conditions from init dict
         if init is not None:
-            self._init_cond(init)
+            self.set_init(init)
 
         # Override for any of the following run parameters
         if reps is not None:
