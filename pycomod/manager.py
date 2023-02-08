@@ -9,44 +9,6 @@ def read_excel_init(file, sheet=None):
     if type(file) is str:
         file = pd.read_excel(file, None)
 
-    # If sheet is None (first call), get the first sheet, else get the
-    # specified sheet
-    if sheet is None:
-        df = list(file.values())[0]
-    else:
-        df = file[sheet]
-
-    init = {}
-    for c in df.columns:
-        # Get raw column as list, removing nans
-        v = [x for x in df[c] if not pd.isna(x)]
-
-        # If it's the output tracking list
-        if c == 'out':
-            init[c] = v
-
-        # If a single value
-        elif len(v) == 1:
-            # Try loading a sheet with that name
-            try:
-                init[c] = read_excel_init(file, v[0])
-            except KeyError:
-                init[c] = v[0]
-
-        # If a column of values, save the list
-        else:
-            init[c] = v
-
-    return init
-
-
-
-# Function to read init from excel file
-def read_excel_init2(file, sheet=None):
-    # If file is a string (first call), read the file
-    if type(file) is str:
-        file = pd.read_excel(file, None)
-
         
         
     # If sheet is None (first call), get the first sheet, else get the
@@ -108,7 +70,7 @@ class RunManager:
 
         # If init is a string, assume it is an excel file and try to read it
         if type(init) == str:
-            init = read_excel_init2(init)
+            init = read_excel_init(init)
 
         # Run info
         model_type = str(type(model)).split('.')[1][:-2]
