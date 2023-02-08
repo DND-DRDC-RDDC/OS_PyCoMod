@@ -144,8 +144,8 @@ class Model(ABC):
 
     # Set the run and model initial conditions from a dictionary                
     def set_init(self, init):
-         self._init_cond(self.init['run'])
-         self._init_cond(self.init['model'])
+         self._init_cond(init['run'])
+         self._init_cond(init['model'])
                     
     # Get the initial condition dict for this model
     def _get_model_init(self):
