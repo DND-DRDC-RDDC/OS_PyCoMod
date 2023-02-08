@@ -355,11 +355,11 @@ m3.write_excel_init('init_mix.xlsx')
 
 In Google Colab, the initialization file will be written to the temporary session storage and can be downloaded, modified and re-uploaded. In a local Python environment, the file is written to local storage.
 
-The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the run, the model and each sub-model are contained in individual tabs. In this case, there are three tabs.
+The Excel initialization file is structured in a similar way to the initialization dictionary. The first tab contains run inputs, the second tab contains the top-level model inputs, and subsequent tabs contain sub-model inputs. In this case, there are four tabs.
 
 ![excel_tabs](https://user-images.githubusercontent.com/86741975/217639740-53b8d062-1c24-4f05-8e7f-2ffd29ac68a0.PNG)
 
-The first tab is always called *run* and it contains all the run control inputs which are:
+The *run* tab always consist of the following settings:
  - *t* - the initial simulation time (usually 0)
  - *date* - the initial simulation date
  - *dt* - the simulation time step
@@ -368,17 +368,17 @@ The first tab is always called *run* and it contains all the run control inputs 
 
 ![run_inputs](https://user-images.githubusercontent.com/86741975/217640283-c0d11c44-e805-4133-ad23-3f7192ce3de2.PNG)
 
-The second tab is called *model* contains the top-level initialization inputs which are *GrpA*, *GrpB*, and *b_mix*.
+The *model* tab contains the initialization inputs for the elements of the top-level model. In this case, they are *GrpA*, *GrpB*, and *b_mix*.
 
 ![model_inputs](https://user-images.githubusercontent.com/86741975/217640524-24f560a6-34b4-4f13-a1ca-ac50112aaec5.PNG)
 
-We can edit the value for the *b_mix* parameter here.
+We can edit the value for the *b_mix* parameter here to affect the rate of cross infections between the two groups.
 
-Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *model.GrpA* which is the name of the second tab. It should not be necessary to change the sheet name entry under a sub-model. In the *model.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
+Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *model.GrpA* which is the name of the third tab. It should not be necessary to change the sheet name entry under a sub-model. In the *model.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
 
-The same applies to the *GrpB* sub-model. Each tab also contains an *_out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
+The same applies to the *GrpB* sub-model. Each tab also contains an *out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
 
 We can edit the values in the Excel file, for example, by changing b_mix to 0.025 (cutting the transmission rate between the two populations in half) and then save it.
 
