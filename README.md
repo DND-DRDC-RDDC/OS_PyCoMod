@@ -355,24 +355,26 @@ m3.write_excel_init('init_mix.xlsx')
 
 In Google Colab, the initialization file will be written to the temporary session storage and can be downloaded, modified and re-uploaded. In a local Python environment, the file is written to local storage.
 
-The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the model and each sub-model are contained in individual tabs. In this case, there are three tabs.
+The Excel initialization file is structured in a similar way to the initialization dictionary. The inputs for the run, the model and each sub-model are contained in individual tabs. In this case, there are three tabs.
 
-![image](https://user-images.githubusercontent.com/86741975/126229677-360af357-0a0b-4984-beef-59d634188f1b.png)
+![excel_tabs](https://user-images.githubusercontent.com/86741975/217639740-53b8d062-1c24-4f05-8e7f-2ffd29ac68a0.PNG)
 
-The first tab is always called *init* and it contains the top-level initialization inputs which are *GrpA*, *GrpB*, and *b_mix*.
+The first tab is always called *run* and it contains all the run control inputs which are:
+ - *t* - the initial simulation time (usually 0)
+ - *date* - the initial simulation date
+ - *dt* - the simulation time step
+ - *end* - the simulation end time
+ - *reps* - the number of replications for Monte Carlo runs
 
-![image](https://user-images.githubusercontent.com/86741975/126227350-953feb05-2c2c-4f55-a939-78d914ad0bbe.png)
+![run_inputs](https://user-images.githubusercontent.com/86741975/217640283-c0d11c44-e805-4133-ad23-3f7192ce3de2.PNG)
+
+The second tab is called *model* contains the top-level initialization inputs which are *GrpA*, *GrpB*, and *b_mix*.
+
+![model_inputs](https://user-images.githubusercontent.com/86741975/217640524-24f560a6-34b4-4f13-a1ca-ac50112aaec5.PNG)
 
 We can edit the value for the *b_mix* parameter here.
 
-The *init* tab also contains the special run control entries which are:
- - *_t* - the initial simulation time (usually 0)
- - *_date* - the initial simulation date
- - *_dt* - the simulation time step
- - *_end* - the simulation end time
- - *_reps* - the number of replications for Monte Carlo runs
-
-Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *init.GrpA* which is the name of the second tab. It should not be necessary to change the sheet name entry under a sub-model. In the *init.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
+Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *model.GrpA* which is the name of the second tab. It should not be necessary to change the sheet name entry under a sub-model. In the *model.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
 
 ![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
 
