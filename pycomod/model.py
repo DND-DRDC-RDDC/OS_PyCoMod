@@ -120,6 +120,7 @@ class Model(ABC):
 
         self._has_priority = pri
 
+    # Set any initial conditions for the model
     def _init_cond(self, init):
         # Recursively apply initial conditions
         for key, value in init.items():
@@ -141,8 +142,13 @@ class Model(ABC):
                 else:
                     e.init_cond(value)
 
+    # Set the run and model initial conditions from a dictionary                
+    def set_init(self, init):
+         self._init_cond(self.init['run'])
+         self._init_cond(self.init['model'])
+                    
     # Get the initial condition dict for this model
-    def _get_init_dict(self):
+    def _get_model_init(self):
 
         self._reset()
 
@@ -152,70 +158,36 @@ class Model(ABC):
 
         for k, v in elements:
             if isinstance(v, Model):
-                d[k] = v._get_init_dict()
+                d[k] = v._get_model_init()
             else:
                 d[k] = v()
 
         return d
+      
+    # Get the run init settings
+    def _get_run_init(self):
+        d = {}
 
-    # Get dataframes representing initial conditions for the model
-    def _get_init_df(self, d=None, key=None):
-
-        self._reset()
-
-        if d is None:
-            d = {}
-
-        if key is None:
-            key = 'init'
-
-        # Create dict
-        d[key] = {}
-
-        # Add all elements to the dict
-        elements = [(k, v) for k, v in self.__dict__.items()
-                    if isinstance(v, (Pool, Parameter, Model))]
-        for k, v in elements:
-            if isinstance(v, Model):
-                next_key = key + '.' + k
-                d[key][k] = [next_key]
-                v._get_init_df(d, next_key)
-            else:
-                if type(v()) == np.ndarray:
-                    d[key][k] = v()
-                else:
-                    d[key][k] = [v()]
-
-        # Add output tracking
-        if self.out is None:
-            d[key]['out'] = [None]
-        else:
-            d[key]['out'] = self.out
-
-        # Add special settings to top level init
-        if key == 'init':
-            d[key]['t'] = [self.t()]
-            d[key]['date'] = [self.date()]
-            d[key]['dt'] = [self.dt()]
-            d[key]['end'] = [self.end()]
-            d[key]['reps'] = [self.reps()]
-
-        # Get max num rows
-        rows = max([len(x) for x in d[key].values()])
-
-        # Normalize column lengths
-        for k in d[key].keys():
-            add = rows - len(d[key][k])
-            if add > 0:
-                d[key][k] = np.append(d[key][k], [None]*add)
-
-        # Convert to dataframe
-        d[key] = pd.DataFrame.from_dict(d[key])
+        # Add run settings
+        d = {}
+        d['t'] = [self.t()]
+        d['date'] = [self.date()]
+        d['dt'] = [self.dt()]
+        d['end'] = [self.end()]
+        d['reps'] = [self.reps()]
 
         return d
 
+    def get_init(self):
+        d = {}
+        
+        d['run'] = self._get_run_init()
+        d['model'] = self._get_model_init()
+        
+        return d
+      
     # Get dataframes representing initial conditions for the model
-    def _get_init_df2(self, d=None, key=None):
+    def _get_init_df(self, d=None, key=None):
 
         self._reset()
 
@@ -277,7 +249,7 @@ class Model(ABC):
       
     # Write an excel file containing initial conditions for the model
     def write_excel_init(self, filename=None):
-        d = self._get_init_df2()
+        d = self._get_init_df()
 
         if filename is None:
             filename = 'init.xlsx'
@@ -560,7 +532,7 @@ class Model(ABC):
 
         # First apply initial conditions from init dict
         if init is not None:
-            self._init_cond(init)
+            self.set_init(init)
 
         # Override for any of the following run parameters
         if end is not None:
