@@ -170,11 +170,11 @@ class Model(ABC):
 
         # Add run settings
         d = {}
-        d['t'] = [self.t()]
-        d['date'] = [self.date()]
-        d['dt'] = [self.dt()]
-        d['end'] = [self.end()]
-        d['reps'] = [self.reps()]
+        d['t'] = self.t()
+        d['date'] = self.date()
+        d['dt'] = self.dt()
+        d['end'] = self.end()
+        d['reps'] = self.reps()
 
         return d
 
