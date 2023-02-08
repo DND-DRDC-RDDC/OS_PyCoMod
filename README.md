@@ -291,23 +291,22 @@ m3 = MixSIR()
 
 In the code above, the two sub-populations, *GrpA* and *GrpB*, are both defined as instances of the *MonteCarloSIR* model. Each group behaves internally as before according to its parameters and initial conditions, but we introduce the possibility of cross-infection between these groups. The cross-infections occur with a different transmission rate, *b_mix*, defined as a parameter in the *MixSIR* model and initialized below. The cross-infection flows result in new infections within each group caused by the infectious population in the other group. Note that in order to save the output from a sub-model, the sub-model must be listed in the parent model's output list: `self.set_output('GrpA','GrpB')`; then all elements of the sub-model will be accessible when plotting.
 
-While *GrpA* and *GrpB* are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is often preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a Python dictionary. For the *MixSIR* model, above, the initialization dictionary would look something like *init_mix* below.
+While *GrpA* and *GrpB* are the same model, we will supply them with different parameter values and initial conditions. Previously, we specified these values while defining the model, but it is often preferable to separate model inputs from the model itself. Therefore, we can supply the inputs for the model at run-time using a Python dictionary. For the *MixSIR* model, above, the initialization dictionary would look something like *init* below.
 
 ```Python
 init_GrpA = {'S': 95, 'I': 5, 'R': 0, 'b_m': 0.2, 'b_s': 0.05, 'g': 0.1}
 init_GrpB = {'S': 30, 'I': 0, 'R': 0, 'b_m': 0.3, 'b_s': 0.05, 'g': 0.1}
-init_mix = {'b_mix': 0.05, 'GrpA': init_GrpA, 'GrpB': init_GrpB,
-            '_reps': 100, '_end': 150}
+init_model = {'b_mix': 0.05, 'GrpA': init_GrpA, 'GrpB': init_GrpB}
+init_run = {'reps': 100, 'end': 150}
+init = {'run':init_run, 'model':init_model}
 ```
 
-The dictionary keys are the names of the model elements, and the dictionary values are used to initialize that element. The only model elements that accept input are pools, parameters, and sub-models. The entry value for a pool is the initial condition for the pool. The entry value for a parameter is the parameter's value which is a constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, `init_GrpA = {'S': 95, 'I': 5, 'R': 0, 'b_m': 0.2, 'b_s': 0.05, 'g': 0.1}`. Hence, nested models are initialized with equivalently nested dictionaries. In this example, *GrpA* is given the same initialization values as in the *MonteCarloSIR* model while *GrpB* is a smaller population (size 30) with a higher mean transmission rate, but with no initial infections.
+The initialization dictionary consists of two entries: *run* contains a dictionary of run inputs, and *model* contains a dictionary of model inputs. In this case, the supplied run inputs are *reps* and *end*. The model parameters dictionary contains keys corresponding to the names of the model elements, and values to be used to initialize that element. The only model elements that accept input are pools, parameters, and sub-models. The entry value for a pool is the initial population of the pool. The entry value for a parameter is the parameter's value which is a constant. To initialize a sub-model, such as *GrpA* above, the entry value is another dictionary designed to initialize the sub-model, `init_GrpA = {'S': 95, 'I': 5, 'R': 0, 'b_m': 0.2, 'b_s': 0.05, 'g': 0.1}`. Hence, nested models are initialized with equivalently nested dictionaries. In this example, *GrpA* is given the same initialization values as in the *MonteCarloSIR* model while *GrpB* is a smaller population (size 30) with a higher mean transmission rate, but with no initial infections.
 
-The top-level initialization dictionary, `init_mix = {'b_mix': 0.05, 'GrpA': init_GrpA, 'GrpB': init_GrpB, '_reps': 100, '_end': 150}`, can also contain some special entries to control the model run. Here, we specify the number of replications with a *_reps* entry and the run duration with an *_end* entry. These special keys are prefixed with an underscore. This allows the entire model setup to be controlled from the initialization dictionary.
-
-We can then perform a run using the dictionary to initialize the model.
+We can then execute a run using the dictionary to initialize the model.
 
 ```Python
-mgr.run_mc(m3, init=init_mix, label='My run - mix')
+mgr.run_mc(m3, init=init, label='My run - mix')
 ```
 
 And we can then plot what happens to *GrpA*.
