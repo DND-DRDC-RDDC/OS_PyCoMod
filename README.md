@@ -376,7 +376,7 @@ We can edit the value for the *b_mix* parameter here to affect the rate of cross
 
 Because *GrpA* and *GrpB* are sub-models, the value under these labels is the name of the tab that contains the initialization data for that sub-model. So under *GrpA*, the value is *model.GrpA* which is the name of the third tab. It should not be necessary to change the sheet name entry under a sub-model. In the *model.GrpA* tab we find the inputs for the elements of the *GrpA* sub-model: *S*, *I*, *R*, *b_m*, *b_s*, and *g*.
 
-![image](https://user-images.githubusercontent.com/86741975/126227829-7080c6b4-a58c-475d-b9ae-dc8058473f00.png)
+![image](https://user-images.githubusercontent.com/86741975/219801517-87655834-f26e-4d0a-920c-f944dcb7f607.png)
 
 The same applies to the *GrpB* sub-model. Each tab also contains an *out* entry which is used to list the outputs for the model or sub-model. This has the same function as calling *set_output* within the model definition. Recall that the outputs of a sub-model will only be saved if the parent model includes the sub-model in its output list. 
 
