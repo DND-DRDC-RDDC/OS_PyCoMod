@@ -9,8 +9,6 @@ def read_excel_init(file, sheet=None):
     if type(file) is str:
         file = pd.read_excel(file, None)
 
-        
-        
     # If sheet is None (first call), get the first sheet, else get the
     # specified sheet
     if sheet is None:
@@ -22,17 +20,17 @@ def read_excel_init(file, sheet=None):
 
     init = {}
     init_return = init
-    
+
     # if first pass, get run params
     if df_run is not None:
         init['run'] = {}
         for c in df_run.columns:
             # Get raw column as list, removing nans
             init['run'][c] = df_run[c][0]
-            
+
         init['model'] = {}
         init = init['model']
-    
+
     # get model params
     for c in df.columns:
         # Get raw column as list, removing nans

@@ -142,11 +142,11 @@ class Model(ABC):
                 else:
                     e.init_cond(value)
 
-    # Set the run and model initial conditions from a dictionary                
+    # Set the run and model initial conditions from a dictionary
     def set_init(self, init):
-         self._init_cond(init['run'])
-         self._init_cond(init['model'])
-                    
+        self._init_cond(init['run'])
+        self._init_cond(init['model'])
+
     # Get the initial condition dict for this model
     def _get_model_init(self):
 
@@ -163,7 +163,7 @@ class Model(ABC):
                 d[k] = v()
 
         return d
-      
+
     # Get the run init settings
     def _get_run_init(self):
         d = {}
@@ -180,12 +180,12 @@ class Model(ABC):
 
     def get_init(self):
         d = {}
-        
+
         d['run'] = self._get_run_init()
         d['model'] = self._get_model_init()
-        
+
         return d
-      
+
     # Get dataframes representing initial conditions for the model
     def _get_init_df(self, d=None, key=None):
 
@@ -194,7 +194,7 @@ class Model(ABC):
         # If this is the root, create the dict and add run settings
         if d is None:
             d = {}
-            
+
             # Add run settings
             d['run'] = {}
             d['run']['t'] = [self.t()]
@@ -202,10 +202,10 @@ class Model(ABC):
             d['run']['dt'] = [self.dt()]
             d['run']['end'] = [self.end()]
             d['run']['reps'] = [self.reps()]
-            
+
             d['run'] = pd.DataFrame.from_dict(d['run'])
 
-        # If this is the root, set the key to 'model' 
+        # If this is the root, set the key to 'model'
         if key is None:
             key = 'model'
 
@@ -245,8 +245,7 @@ class Model(ABC):
         d[key] = pd.DataFrame.from_dict(d[key])
 
         return d
-      
-      
+
     # Write an excel file containing initial conditions for the model
     def write_excel_init(self, filename=None):
         d = self._get_init_df()
