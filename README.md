@@ -11,6 +11,8 @@ The primary developers and contributors to this work are:
  - Ms. Josée van den Hoogen
  - Dr. Steve Guillouzic
 
+The contents of this readme have also been published as a DRDC reference document: [Okazawa, S., van den Hoogen, J., and Guillouzic, S., PyCoMod (Python Compartment Modelling) Programming reference. DRDC-RDDC-2023-D111](https://pubs.drdc-rddc.gc.ca/BASIS/pcandid/www/engpub/DDW?W%3DSYSNUM=817298&r=0).
+
 PyCoMod is composed of a set of Python classes:
  - model element classes (pools, flows, parameters, equations, and random samples) are used to define the behavior of the system;
  - a model class is used to contain these elements as well as nested sub-models;
