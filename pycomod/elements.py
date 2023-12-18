@@ -80,6 +80,8 @@ class SimDate(BuildingBlock):
         else:
             start_date = np.datetime64(start_date)
 
+        super().__init__(start_date)
+
     def reset(self):
         super().reset()
 
