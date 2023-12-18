@@ -68,7 +68,7 @@ class RunManager:
         return self.runs[key]
 
     # Run a model using init (initial conditions)
-    def _run(self, model, init=None, duration=None, label=None, dt=None,
+    def _run(self, model, init=None, duration=None, label=None, dt=None, tunit=None,
              start_date=None, start_time=None, reps=None):
 
         # If init is a string, assume it is an excel file and try to read it
@@ -105,10 +105,10 @@ class RunManager:
 
         # Initialize and run the model
         if reps == 1:
-            model._run(duration, dt, start_time, start_date, init)
+            model._run(duration, dt, tunit, start_time, start_date, init)
             run_data['output'] = model._output
         else:
-            model._run_mc(reps, duration, dt, start_time, start_date, init)
+            model._run_mc(reps, duration, dt, tunit, start_time, start_date, init)
             run_data['output_mc'] = model._output_mc
 
         run_data['reps'] = reps
@@ -118,13 +118,13 @@ class RunManager:
         self.runs[label] = run_data
 
     # Execute a run on model once using init (initial conditions)
-    def run(self, model, init=None, duration=None, label=None, dt=None,
+    def run(self, model, init=None, duration=None, label=None, dt=None, tunit=None,
             start_date=None, start_time=None):
-        self._run(model, init, duration, label, dt,
+        self._run(model, init, duration, label, dt, tunit,
                   start_date, start_time, reps=1)
 
     # Execute a monte-carlo run on model using init (initial conditions)
-    def run_mc(self, model, init=None, duration=None, label=None, dt=None,
+    def run_mc(self, model, init=None, duration=None, label=None, dt=None, tunit=None,
                start_date=None, start_time=None, reps=None):
-        self._run(model, init, duration, label, dt,
+        self._run(model, init, duration, label, dt, tunit,
                   start_date, start_time, reps)

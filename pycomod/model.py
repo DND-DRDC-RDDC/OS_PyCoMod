@@ -533,7 +533,7 @@ class Model(ABC):
         return self._output
 
     # Do a run
-    def _run(self, end=None, dt=None, start_time=None,
+    def _run(self, end=None, dt=None, tunit=None, start_time=None,
              start_date=None, init=None):
 
         # First apply initial conditions from init dict
@@ -546,6 +546,9 @@ class Model(ABC):
 
         if dt is not None:
             self._push_init('dt', dt)
+
+        if tunit is not None:
+            self._push_init('tunit', tunit)
 
         if start_time is not None:
             self._push_init('t', start_time)
@@ -595,7 +598,7 @@ class Model(ABC):
             self._append_output_mc(self._output_mc, self._output)
 
     # Monte carlo runs
-    def _run_mc(self, reps=None, end=None, dt=None,
+    def _run_mc(self, reps=None, end=None, dt=None, tunit=None,
                 start_time=None, start_date=None, init=None):
         # First apply initial conditions from init dict
         if init is not None:
@@ -610,6 +613,9 @@ class Model(ABC):
 
         if dt is not None:
             self._push_init('dt', dt)
+
+        if tunit is not None:
+            self._push_init('tunit', tunit)
 
         if start_time is not None:
             self._push_init('t', start_time)
