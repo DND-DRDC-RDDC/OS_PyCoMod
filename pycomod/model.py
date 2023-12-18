@@ -15,6 +15,7 @@ class Model(ABC):
         # Time info
         self._t = SimTime()
         self._date = SimDate()
+        self._tunit = RunInfo(np.timedelta64(1, 'd'))
 
         # Run info
         self._dt = RunInfo(1)
@@ -56,6 +57,10 @@ class Model(ABC):
     @property
     def date(self):
         return self._date
+        
+    @property
+    def tunit(self):
+        return self._tunit
 
     @property
     def dt(self):
@@ -127,7 +132,7 @@ class Model(ABC):
             if key == 'out':
                 # Store elements of this model to be tracked for output
                 self._out = value
-            elif key in ['dt', 't', 'end', 'date', 'reps']:
+            elif key in ['dt', 't', 'tunit', 'end', 'date', 'reps']:
                 # If time and run info, push init to submodels
                 self._push_init(key, value)
             else:
@@ -172,6 +177,7 @@ class Model(ABC):
         d = {}
         d['t'] = self.t()
         d['date'] = self.date()
+        d['tunit'] = self.tunit()
         d['dt'] = self.dt()
         d['end'] = self.end()
         d['reps'] = self.reps()
@@ -199,6 +205,7 @@ class Model(ABC):
             d['run'] = {}
             d['run']['t'] = [self.t()]
             d['run']['date'] = [self.date()]
+            d['run']['tunit'] = [self.tunit()]
             d['run']['dt'] = [self.dt()]
             d['run']['end'] = [self.end()]
             d['run']['reps'] = [self.reps()]
@@ -362,7 +369,7 @@ class Model(ABC):
         self.t.update(self.dt())
         self.t.save_hist(passno)
 
-        self.date.update(self.dt())
+        self.date.update(self.dt(), self.tunit())
         self.date.save_hist(passno)
 
     # Regular update sequence

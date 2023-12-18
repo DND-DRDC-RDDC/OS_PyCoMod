@@ -73,20 +73,12 @@ class SimTime(BuildingBlock):
 # Sim time dates
 class SimDate(BuildingBlock):
 
-    def __init__(self, start_date=None, unit=None):
+    def __init__(self, start_date=None):
 
         if start_date is None:
             start_date = np.datetime64('today')
         else:
             start_date = np.datetime64(start_date)
-
-        if unit is None:
-            unit = np.timedelta64(datetime.timedelta(days=1))
-        else:
-            unit = np.timedelta64(unit)
-
-        super().__init__(start_date)
-        self.unit = unit
 
     def reset(self):
         super().reset()
@@ -94,8 +86,8 @@ class SimDate(BuildingBlock):
     def init_cond(self, start_date):
         super().reset(np.datetime64(start_date))
 
-    def update(self, dt):
-        self.value = self.value + self.unit*dt
+    def update(self, dt, tunit):
+        self.value = self.value + dt*tunit
 
 
 # Class for arbitrary run info
