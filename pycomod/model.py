@@ -15,7 +15,7 @@ class Model(ABC):
         # Time info
         self._t = SimTime()
         self._date = SimDate()
-        self._tunit = RunInfo(np.timedelta64(1, 'd'))
+        self._tunit = RunInfo(np.timedelta64(1, 'D'))
 
         # Run info
         self._dt = RunInfo(1)
