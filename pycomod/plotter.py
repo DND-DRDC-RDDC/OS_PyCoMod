@@ -26,8 +26,8 @@ class Plotter:
         self.ax.grid(True, ls=':')
 
         # Monthly axis tick marks
-        self.ax.xaxis.set_major_locator(months)
-        self.ax.xaxis.set_major_formatter(months_fmt)
+        #self.ax.xaxis.set_major_locator(months)
+        #self.ax.xaxis.set_major_formatter(months_fmt)
 
         # Title
         if title is not None:
