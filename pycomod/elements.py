@@ -89,7 +89,7 @@ class SimDate(BuildingBlock):
         super().reset(np.datetime64(start_date))
 
     def update(self, dt, tunit):
-        self.value = self.value + dt*tunit
+        self.value = self.value + dt*tunit.astype('timedelta64[s]')
 
 
 # Class for arbitrary run info
