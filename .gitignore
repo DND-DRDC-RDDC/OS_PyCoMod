@@ -1,0 +1,4 @@
+# ignore ALL files in directories named build, dist, pycomod.egg-info
+build/
+dist/
+pycomod.egg-info/

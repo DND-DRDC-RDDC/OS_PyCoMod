@@ -7,6 +7,27 @@ from pycomod.elements import (BuildingBlock, SimTime, SimDate, RunInfo,
                               Pool, Flow, Parameter, Sample, Equation)
 
 
+
+class event:
+    def __init__(self, init=False, delay=0, priority=0):
+        self.init = init
+        self.delay = delay
+        self.priority = priority
+        
+    def __call__(self, f):
+        class wrapper:
+            def __init__(self, f):
+                #register the event
+                self.f = f
+                
+            def __call__(self):
+                self.f()
+                
+        return wrapper
+                
+    
+        
+
 # Class for building and running the model
 class Model(ABC):
 
@@ -41,6 +62,9 @@ class Model(ABC):
 
         # Priority flow flag
         self._has_priority = False
+
+        # Event queue for discrete events
+        self._event_queue = []
 
         # Setup
         self.build()
@@ -111,6 +135,8 @@ class Model(ABC):
                 self._pools.append(e)
             elif isinstance(e, Model):
                 self._models.append(e)
+                #all sub-models share the root event queue
+                e._event_queue = self._event_queue
 
     # Check self and sub-models for priority flows and updates _has_priority
     # flag
