@@ -27,14 +27,9 @@ class BuildingBlock:
         self.value = self.init_value
         self.value_hist = [self.init_value]
 
-    def save_hist(self, passno=1):
-        # If first pass, append the current value to value_hist
-        if passno == 1:
-            self.value_hist.append(self.value)
-        # If this is a second or subsequent pass, set last value in value hist
-        # (rather than appending)
-        else:
-            self.value_hist[-1] = self.value
+    def save_hist(self):
+        self.value_hist.append(self.value)
+
 
     # Calling the building block returns its most recent value
     # Optional idx parameter used to return past values, e.g. Block(-2) returns
@@ -151,14 +146,13 @@ class Pool(BuildingBlock):
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None,
-                 priority=False, init=False):
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None):
         super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
-        self.priority = priority
-        self.init = init
+        #self.priority = priority
+        #self.init = init
 
     # Reset rate values
     def reset(self):
@@ -167,8 +161,8 @@ class Flow(BuildingBlock):
     # Update the flow
     def update(self, dt):
         self.value = self.rate_func()*dt
-        if self.init:
-            self.value = self.value * 0
+        #if self.init:
+        #    self.value = self.value * 0
 
     # Add flows to the src and dest pools
     def add_flows(self):

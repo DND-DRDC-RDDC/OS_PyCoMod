@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from pycomod.elements import (BuildingBlock, SimTime, SimDate, RunInfo,
+from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
                               Pool, Flow, Parameter, Sample, Equation)
 
 
@@ -31,7 +31,7 @@ class event:
 # Class for building and running the model
 class Model(ABC):
 
-    def __init__(self, init=None):
+    def __init__(self):
 
         # Time info
         self._t = SimTime()
@@ -47,8 +47,6 @@ class Model(ABC):
         self._parameters = []
         self._samples = []
         self._equations = []
-        self._init_flows = []
-        self._priority_flows = []
         self._flows = []
         self._pools = []
 
@@ -60,8 +58,6 @@ class Model(ABC):
         self._output = None  # Output from run
         self._output_mc = None  # Output from mc runs
 
-        # Priority flow flag
-        self._has_priority = False
 
         # Event queue for discrete events
         self._event_queue = []
@@ -69,9 +65,7 @@ class Model(ABC):
         # Setup
         self.build()
         self._register()
-        self._check_priority()
-        if init is not None:
-            self._init_cond(init)
+
 
     # Read-only properties
     @property
@@ -125,12 +119,7 @@ class Model(ABC):
             elif isinstance(e, Equation):
                 self._equations.append(e)
             elif isinstance(e, Flow):
-                if e.init:
-                    self._init_flows.append(e)
-                elif e.priority:
-                    self._priority_flows.append(e)
-                else:
-                    self._flows.append(e)
+                self._flows.append(e)
             elif isinstance(e, Pool):
                 self._pools.append(e)
             elif isinstance(e, Model):
@@ -138,18 +127,7 @@ class Model(ABC):
                 #all sub-models share the root event queue
                 e._event_queue = self._event_queue
 
-    # Check self and sub-models for priority flows and updates _has_priority
-    # flag
-    def _check_priority(self):
-        pri = False
-        if len(self._priority_flows) > 0:
-            pri = True
 
-        for m in self._models:
-            if m._has_priority:
-                pri = True
-
-        self._has_priority = pri
 
     # Set any initial conditions for the model
     def _init_cond(self, init):
@@ -297,25 +275,6 @@ class Model(ABC):
             m._push_init(key, value)
 
     # UPDATE FUNCTIONS
-    def _add_init_flows(self):
-
-        # Recurse through sub-models
-        for m in self._models:
-            m._add_init_flows()
-
-        # Add priority flows to pools
-        for e in self._init_flows:
-            e.add_flows()
-
-    def _add_priority_flows(self):
-
-        # Recurse through sub-models
-        for m in self._models:
-            m._add_priority_flows()
-
-        # Add priority flows to pools
-        for e in self._priority_flows:
-            e.add_flows()
 
     def _add_flows(self):
 
@@ -327,76 +286,53 @@ class Model(ABC):
         for e in self._flows:
             e.add_flows()
 
-    def _update_pools(self, passno=1):
+    def _update_pools(self):
 
         # Recurse through sub-models
         for m in self._models:
-            m._update_pools(passno)
+            m._update_pools()
 
         # Update pools (in order)
         for e in self._pools:
             e.update()
-            e.save_hist(passno)
+            e.save_hist()
 
-    def _update_equations(self, passno=1):
+    def _update_equations(self):
 
         # Recurse through sub-models
         for m in self._models:
-            m._update_equations(passno)
+            m._update_equations()
 
         # Update equations (in order)
         for e in self._equations:
             e.update(self.t(), self.dt())
-            e.save_hist(passno)
+            e.save_hist()
 
-    def _update_init_flows(self, passno=1):
 
-        # Recurse through sub-models
-        for m in self._models:
-            m._update_init_flows(passno)
-
-        # Update init flows (order independent)
-        for e in self._init_flows:
-            e.update(self.dt())
-        for e in self._init_flows:
-            e.save_hist(passno)
-
-    def _update_priority_flows(self, passno=1):
+    def _update_flows(self):
 
         # Recurse through sub-models
         for m in self._models:
-            m._update_priority_flows(passno)
+            m._update_flows()
 
-        # Update priority flows (order independent)
-        for e in self._priority_flows:
-            e.update(self.dt())
-        for e in self._priority_flows:
-            e.save_hist(passno)
-
-    def _update_flows(self, passno=1):
-
-        # Recurse through sub-models
-        for m in self._models:
-            m._update_flows(passno)
-
-        # Update priority flows (order independent)
+        # Update flows (order independent)
         for e in self._flows:
             e.update(self.dt())
         for e in self._flows:
-            e.save_hist(passno)
+            e.save_hist()
 
-    def _update_time(self, passno=1):
+    def _update_time(self):
 
         # Recurse through sub-models
         for m in self._models:
-            m._update_time(passno)
+            m._update_time()
 
         # Update time info
         self.t.update(self.dt())
-        self.t.save_hist(passno)
+        self.t.save_hist()
 
         self.date.update(self.dt(), self.tunit())
-        self.date.save_hist(passno)
+        self.date.save_hist()
 
     # Regular update sequence
     def _update_regular(self):
@@ -406,24 +342,7 @@ class Model(ABC):
         self._update_equations()
         self._update_flows()
 
-        self._update_init_flows()
 
-    # Update sequence when priority flows are being used (2 passes)
-    def _update_priority(self):
-
-        # FIRST PASS FOR PRIORITY FLOWS
-        self._add_priority_flows()
-        self._update_pools()
-        self._update_equations()
-        self._update_flows()
-
-        # SECOND PASS FOR REGULAR FLOWS
-        self._add_flows()
-        self._update_pools(2)
-        self._update_equations(2)
-        self._update_priority_flows()
-
-        self._update_init_flows()
 
     # Update pass for all model elements
     def _update(self):
@@ -432,10 +351,7 @@ class Model(ABC):
         self._update_time()
 
         # Update model elements
-        if self._has_priority:
-            self._update_priority()
-        else:
-            self._update_regular()
+        self._update_regular()
 
     def _reset_pools(self):
 
@@ -477,25 +393,6 @@ class Model(ABC):
         for e in self._equations:
             e.reset()
 
-    def _reset_init_flows(self):
-
-        # Recurse through sub-models
-        for m in self._models:
-            m._reset_init_flows()
-
-        # Reset samples
-        for e in self._init_flows:
-            e.reset()
-
-    def _reset_priority_flows(self):
-
-        # Recurse through sub-models
-        for m in self._models:
-            m._reset_priority_flows()
-
-        # Reset samples
-        for e in self._priority_flows:
-            e.reset()
 
     def _reset_flows(self):
 
@@ -534,16 +431,8 @@ class Model(ABC):
         self._reset_parameters()
         self._reset_samples()
         self._reset_equations()
-        self._reset_init_flows()
-        self._reset_priority_flows()
         self._reset_flows()
 
-        # Apply init flows
-        self._add_init_flows()
-        self._update_pools(2)
-        self._update_equations(2)
-        self._update_priority_flows(2)
-        self._update_flows(2)
 
     # Save all output
     def _save_output(self):
