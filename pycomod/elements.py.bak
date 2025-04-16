@@ -167,6 +167,8 @@ class Flow(BuildingBlock):
         v = self.rate_func()*dt + self.rem
         
         if self.discrete:
+            #v_ = float(int(v))
+            #v_ = float(int(v))
             v_ = round(v,0)
             self.rem = v - v_
             v = v_
