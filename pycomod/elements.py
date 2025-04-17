@@ -260,7 +260,7 @@ class Step(Equation):
 
 class Impulse(Equation):
 
-    def __init__(self, values, times, default=0):
+    def __init__(self, values, times):
 
         # Define the impulse function
         def eq_func(t=0, dt=1):
@@ -279,10 +279,10 @@ class Impulse(Equation):
 
             # If no impulse values fall within t-dt and t, return default
             if 1 not in y:
-                return default/dt
+                return 0
             # Else return sum of impulse values that fall within the t-dt and t
             else:
-                return sum(i*j for i, j in zip(vals, y)/dt)
+                return sum(i*j for i, j in zip(vals, y))/dt
 
         super().__init__(eq_func)
 
