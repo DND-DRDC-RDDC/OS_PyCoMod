@@ -236,11 +236,21 @@ class Step(Equation):
 
         # Define the step function
         def eq_func(t=0):
-            idx = len([x for x in times if x <= t]) - 1
+            
+            vals = values
+            tims = times
+            
+            if isinstance(vals, Parameter):
+                vals = vals()
+                
+            if isinstance(tims, Parameter):
+                tims = tims()
+            
+            idx = len([x for x in tims if x <= t]) - 1
             if idx < 0:
                 return default
             else:
-                return values[idx]
+                return vals[idx]
 
         super().__init__(eq_func)
 
@@ -255,15 +265,24 @@ class Impulse(Equation):
         # Define the impulse function
         def eq_func(t=0, dt=1):
 
+            vals = values
+            tims = times
+            
+            if isinstance(vals, Parameter):
+                vals = vals()
+                
+            if isinstance(tims, Parameter):
+                tims = tims()
+
             # Impulse times x where t-dt < x <= t
-            y = [1 if x > t-dt and x <= t else 0 for x in times]
+            y = [1 if x > t-dt and x <= t else 0 for x in tims]
 
             # If no impulse values fall within t-dt and t, return default
             if 1 not in y:
-                return default
+                return default/dt
             # Else return sum of impulse values that fall within the t-dt and t
             else:
-                return sum(i*j for i, j in zip(values, y))
+                return sum(i*j for i, j in zip(vals, y)/dt)
 
         super().__init__(eq_func)
 

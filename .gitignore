@@ -7,3 +7,9 @@ pycomod.egg-info/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Other ignores
+*.xlsx
+*.bak
+.ipynb_checkpoints/
+
