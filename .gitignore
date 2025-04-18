@@ -3,6 +3,9 @@ build/
 dist/
 pycomod.egg-info/
 pycomod/__pycache__/
+.ipynb_checkpoints/
+
 
 # ignore backups
 *.bak
+*.xlsx
