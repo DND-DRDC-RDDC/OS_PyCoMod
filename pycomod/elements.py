@@ -152,7 +152,7 @@ class Flow(BuildingBlock):
 
     # Constructor
     def __init__(self, rate_func=lambda: 1, src=None, dest=None,
-                 priority=False, init=False, discrete=Fals):
+                 priority=False, init=False, discrete=False):
         super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
