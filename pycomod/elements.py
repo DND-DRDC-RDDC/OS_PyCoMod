@@ -152,13 +152,16 @@ class Flow(BuildingBlock):
 
     # Constructor
     def __init__(self, rate_func=lambda: 1, src=None, dest=None,
-                 priority=False, init=False):
+                 priority=False, init=False, discrete=Fals):
         super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
         self.priority = priority
         self.init = init
+        
+        self.discrete = discrete
+        self.rem = 0
 
     # Reset rate values
     def reset(self):
@@ -166,7 +169,16 @@ class Flow(BuildingBlock):
 
     # Update the flow
     def update(self, dt):
-        self.value = self.rate_func()*dt
+        
+        v = self.rate_func()*dt + self.rem
+        
+        if self.discrete:
+            v_ = round(v,0)
+            self.rem = v - v_
+            v = v_
+        
+        self.value = v
+        
         if self.init:
             self.value = self.value * 0
 
@@ -231,11 +243,20 @@ class Step(Equation):
 
         # Define the step function
         def eq_func(t=0):
-            idx = len([x for x in times if x <= t]) - 1
+            vals = values
+            tims = times
+            
+            if isinstance(vals, Parameter):
+                vals = vals()
+                
+            if isinstance(tims, Parameter):
+                tims = tims()
+            
+            idx = len([x for x in tims if x <= t]) - 1
             if idx < 0:
                 return default
             else:
-                return values[idx]
+                return vals[idx]
 
         super().__init__(eq_func)
 
@@ -245,20 +266,29 @@ class Step(Equation):
 
 class Impulse(Equation):
 
-    def __init__(self, values, times, default=0):
+    def __init__(self, values, times):
 
         # Define the impulse function
         def eq_func(t=0, dt=1):
 
+            vals = values
+            tims = times
+            
+            if isinstance(vals, Parameter):
+                vals = vals()
+                
+            if isinstance(tims, Parameter):
+                tims = tims()
+
             # Impulse times x where t-dt < x <= t
-            y = [1 if x > t-dt and x <= t else 0 for x in times]
+            y = [1 if x > t-dt and x <= t else 0 for x in tims]
 
             # If no impulse values fall within t-dt and t, return default
             if 1 not in y:
-                return default
+                return 0
             # Else return sum of impulse values that fall within the t-dt and t
             else:
-                return sum(i*j for i, j in zip(values, y))
+                return sum(i*j for i, j in zip(vals, y))/dt
 
         super().__init__(eq_func)
 

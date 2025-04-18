@@ -2,3 +2,7 @@
 build/
 dist/
 pycomod.egg-info/
+pycomod/__pycache__/
+
+# ignore backups
+*.bak
