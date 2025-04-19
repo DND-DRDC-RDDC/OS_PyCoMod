@@ -3,6 +3,14 @@ import datetime
 import numpy as np
 
 
+# function to fix the 'other' parameter in operator methods
+def f(other):
+    if isinstance(other, BuildingBlock):
+        return other()
+    else:
+        return other
+    
+
 # Building block class for model elements
 # Handles the initial value, current value, and history of values for the
 # element
@@ -47,6 +55,95 @@ class BuildingBlock:
     # Get the time series data for this element as a numpy array
     def get_hist(self):
         return np.array(self.value_hist)
+
+
+
+    # data model methods
+    def __float__(self):
+        return float(self())
+        
+    def __int__(self):
+        return int(self())
+    
+    # comparators
+    def __lt__(self, other):
+        return self() < f(other)
+        
+    def __le__(self, other):
+        return self() <= f(other)
+        
+    def __eq__(self, other):
+        return self() == f(other)
+        
+    def __ne__(self, other):
+        return self() != f(other)
+        
+    def __gt__(self, other):
+        return self() > f(other)
+        
+    def __ge__(self, other):
+        return self() >= f(other)
+        
+        
+    # numeric
+    def __add__(self, other):
+        return self() + f(other)
+        
+    def __sub__(self, other):
+        return self() - f(other)
+        
+    def __mul__(self, other):
+        return self() * f(other)
+        
+    def __matmul__(self, other):
+        return self() @ f(other)
+        
+    def __truediv__(self, other):
+        return self() / f(other)
+        
+    def __floordiv__(self, other):
+        return self() // f(other)
+        
+    def __mod__(self, other):
+        return self() % f(other)
+        
+    def __pow__(self, other):
+        return self() ** f(other)
+        
+        
+    def __radd__(self, other):
+        return f(other) + self()
+        
+    def __rsub__(self, other):
+        return f(other) - self()
+        
+    def __rmul__(self, other):
+        return f(other) * self()
+        
+    def __rmatmul__(self, other):
+        return f(other) @ self()
+        
+    def __rtruediv__(self, other):
+        return f(other) / self()
+        
+    def __rfloordiv__(self, other):
+        return f(other) // self()
+        
+    def __rmod__(self, other):
+        return f(other) % self()
+        
+    def __rpow__(self, other):
+        return f(other) ** self()
+        
+        
+    def __neg__(self):
+        return -self()
+        
+    def __abs__(self):
+        return abs(self())
+        
+
+
 
 
 # Sim time
@@ -164,7 +261,7 @@ class Flow(BuildingBlock):
     # Update the flow
     def update(self, dt):
         
-        v = self.rate_func()*dt + self.rem
+        v = float(self.rate_func())*dt + self.rem
         
         if self.discrete:
             v_ = round(v,0)

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Sample, Equation)
+                              Pool, Flow, Parameter, Sample, Equation, Step, Impulse)
 
 
 
@@ -52,6 +52,9 @@ class Model(ABC):
 
         # Sub-models
         self._models = []
+
+        # Available
+        self._available = {}
 
         # Output
         self._out = None  # Elements to track for output
@@ -103,6 +106,57 @@ class Model(ABC):
     def build(self):
         # Implemented by sub-class
         pass
+        
+    def set_available(self, names, output=None ):
+        
+        # self is not needed in the dict
+        del names['self']
+        
+        for key, value in names.items():
+            value.name = key
+        
+        self._available = names
+        self._out = output
+        
+        
+    def __getattr__(self, name):
+        return self._available[name]
+    
+    # element creation functions
+    def pool(self, value=1):
+        e = Pool(value)
+        self._pools.append(e)
+        return e
+        
+    def flow(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
+        e = Flow(rate_func, src, dest, discrete)
+        self._flows.append(e)
+        return e
+        
+    def parameter(self, value=1):
+        e = Parameter(value)
+        self._parameters.append(e)
+        return e
+        
+    def equation(self, eq_func=lambda: 1):
+        e = Equation(eq_func)
+        self._equations.append(e)
+        return e
+        
+    def step(self, values, times, default=0):
+        e = Step(values, times, default)
+        self._equations.append(e)
+        return e       
+     
+    def impulse(self, values, times):
+        e = Impulse(values, times)
+        self._equations.append(e)
+        return e
+
+    def submodel(self, m):
+        self._models.append(m)
+        m._event_queue = self._event_queue
+        return m
 
     def _register(self):
         # Get all attributes that are an instance of BuildingBlock and
@@ -114,18 +168,18 @@ class Model(ABC):
         for e in elements:
             if isinstance(e, Sample):
                 self._samples.append(e)
-            elif isinstance(e, Parameter):
-                self._parameters.append(e)
-            elif isinstance(e, Equation):
-                self._equations.append(e)
-            elif isinstance(e, Flow):
-                self._flows.append(e)
-            elif isinstance(e, Pool):
-                self._pools.append(e)
-            elif isinstance(e, Model):
-                self._models.append(e)
+            #elif isinstance(e, Parameter):
+            #    self._parameters.append(e)
+            #elif isinstance(e, Equation):
+            #    self._equations.append(e)
+            #elif isinstance(e, Flow):
+            #    self._flows.append(e)
+            #elif isinstance(e, Pool):
+            #    self._pools.append(e)
+            #elif isinstance(e, Model):
+            #    self._models.append(e)
                 #all sub-models share the root event queue
-                e._event_queue = self._event_queue
+            #    e._event_queue = self._event_queue
 
 
 
@@ -224,7 +278,7 @@ class Model(ABC):
         d[key] = {}
 
         # Add all elements to the dict
-        elements = [(k, v) for k, v in self.__dict__.items()
+        elements = [(k, v) for k, v in self._available.items()
                     if isinstance(v, (Pool, Parameter, Model))]
         for k, v in elements:
             if isinstance(v, Model):
@@ -439,9 +493,11 @@ class Model(ABC):
         self._output = {}
         for key in self.out:
             e = getattr(self, key)
+            #key = e.name
 
             if isinstance(e, BuildingBlock):
-                self._output[key] = getattr(self, key).get_hist()
+                #self._output[key] = getattr(self, key).get_hist()
+                self._output[key] = e.get_hist()
             elif isinstance(e, Model):
                 self._output[key] = e._save_output()
 
