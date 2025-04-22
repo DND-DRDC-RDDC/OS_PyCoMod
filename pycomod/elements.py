@@ -257,7 +257,7 @@ class Flow(BuildingBlock):
     def reset(self, dt):
         self.rem = 0
 
-        v = float(self.rate_func())*dt + self.rem
+        v = self.rate_func()*dt + self.rem
         
         if self.discrete:
             v_ = round(v,0)
@@ -269,7 +269,7 @@ class Flow(BuildingBlock):
     # Update the flow
     def update(self, dt):
         
-        v = float(self.rate_func())*dt + self.rem
+        v = self.rate_func()*dt + self.rem
         
         if self.discrete:
             v_ = round(v,0)
@@ -329,10 +329,20 @@ class Equation(BuildingBlock):
         self.eq_func = eq_func
 
     def reset(self):
-        super().reset(self.eq_func())
+        
+        v = self.eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
+            
+        super().reset(v)
 
     def update(self, t, dt):
-        self.value = self.eq_func()
+        
+        v = self.eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
+        
+        self.value = v
 
 
 class Step(Equation):
