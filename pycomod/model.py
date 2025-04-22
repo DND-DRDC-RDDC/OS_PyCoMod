@@ -116,7 +116,7 @@ class Model(ABC):
             value.name = key
         
         self._available = names
-        self._out = output
+        self._out = [o.name for o in output]
         
         
     def __getattr__(self, name):
@@ -456,7 +456,7 @@ class Model(ABC):
 
         # Reset samples
         for e in self._flows:
-            e.reset()
+            e.reset(self.dt)
 
     def _reset_time(self):
 

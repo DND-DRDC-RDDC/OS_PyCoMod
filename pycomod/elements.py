@@ -254,10 +254,18 @@ class Flow(BuildingBlock):
         self.rem = 0
 
     # Reset rate values
-    def reset(self):
-        super().reset(self.rate_func())
+    def reset(self, dt):
         self.rem = 0
 
+        v = float(self.rate_func())*dt + self.rem
+        
+        if self.discrete:
+            v_ = round(v,0)
+            self.rem = v - v_
+            v = v_
+        
+        super().reset(v)
+        
     # Update the flow
     def update(self, dt):
         
