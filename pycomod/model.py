@@ -128,11 +128,59 @@ class Model(ABC):
         self._pools.append(e)
         return e
         
-    def flow(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
-        e = Flow(rate_func, src, dest, discrete)
-        self._flows.append(e)
-        return e
+    # def flow(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
+        # e = Flow(rate_func, src, dest, discrete)
+        # self._flows.append(e)
+        # return e
         
+    def flow(self, *args, **kwargs):
+        # decorator without parameters or call with flow function but no parameters
+        # a flow without src or dest args is useless, but syntactically allowed
+        if len(args)==1 and len(kwargs)==0 and callable(args[0]):
+            e = Flow(args[0])
+            self._flows.append(e)
+            return e
+            
+        # non-decorator call with flow function and optional parameters
+        elif len(args)==1 and len(kwargs)>0 and callable(args[0]):
+            
+            src = None
+            dest = None
+            discrete = False
+            
+            if 'src' in kwargs:
+                src = kwargs['src']
+            if 'dest' in kwargs:
+                dest = kwargs['dest']
+            if 'discrete' in kwargs:
+                discrete = kwargs['discrete']
+            
+            e = Flow(args[0], src, dest, discrete)
+            self._flows.append(e)
+            return e
+        
+        # else assume decorator with params
+        else:
+            src = None
+            dest = None
+            discrete = False
+            
+            if 'src' in kwargs:
+                src = kwargs['src']
+            if 'dest' in kwargs:
+                dest = kwargs['dest']
+            if 'discrete' in kwargs:
+                discrete = kwargs['discrete']
+                
+            def inner(rate_func):
+                e = Flow(rate_func, src, dest, discrete)
+                self._flows.append(e)
+                return e
+                
+            return inner
+        
+            
+            
     def parameter(self, value=1):
         e = Parameter(value)
         self._parameters.append(e)
