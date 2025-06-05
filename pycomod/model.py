@@ -186,8 +186,8 @@ class Model(ABC):
         self._parameters.append(e)
         return e
         
-    def equation(self, eq_func=lambda: 1):
-        e = Equation(eq_func)
+    def equation(self, eq_func=lambda: 1, value=None):
+        e = Equation(eq_func, value)
         self._equations.append(e)
         return e
         

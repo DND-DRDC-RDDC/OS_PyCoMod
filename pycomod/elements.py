@@ -326,17 +326,24 @@ class Sample(BuildingBlock):
 class Equation(BuildingBlock):
 
     # Constructor
-    def __init__(self, eq_func=lambda: 1):
-        super().__init__(eq_func())
+    def __init__(self, eq_func=lambda: 1, value=None):
+        if value is not None:
+            super().__init__(value)
+        else:
+            v = eq_func()
+            if isinstance(v, BuildingBlock):
+                v = v()
+            super().__init__(v)
+        
         self.eq_func = eq_func
 
     def reset(self):
         
-        v = self.eq_func()
-        if isinstance(v, BuildingBlock):
-            v = v()
+        #v = self.eq_func()
+        #if isinstance(v, BuildingBlock):
+        #    v = v()
             
-        super().reset(v)
+        super().reset()
 
     def update(self, t, dt):
         
