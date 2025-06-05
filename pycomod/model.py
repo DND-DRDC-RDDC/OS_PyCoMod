@@ -123,8 +123,8 @@ class Model(ABC):
         return self._available[name]
     
     # element creation functions
-    def pool(self, value=1):
-        e = Pool(value)
+    def pool(self, value=1, allow_neg=False):
+        e = Pool(value, allow_neg)
         self._pools.append(e)
         return e
         

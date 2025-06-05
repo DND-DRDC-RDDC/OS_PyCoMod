@@ -203,8 +203,9 @@ class RunInfo(BuildingBlock):
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1):
+    def __init__(self, value=1, allow_neg=False):
         super().__init__(value)
+        self.allow_neg = allow_neg
         self.delta = 0
 
     # Reset
@@ -231,7 +232,8 @@ class Pool(BuildingBlock):
         self.value = self.value + self.delta
 
         # Prevent negative values for pool (this needs more thought)
-        self.value = np.maximum(self.value, 0)
+        if not self.allow_neg:
+            self.value = np.maximum(self.value, 0)
 
         self.reset_flows()
 
