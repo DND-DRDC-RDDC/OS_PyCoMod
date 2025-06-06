@@ -113,7 +113,8 @@ class Model(ABC):
         del names['self']
         
         for key, value in names.items():
-            value.name = key
+            if isinstance(value, BuildingBlock):
+                value.name = key
         
         self._available = names
         self._out = [o.name for o in output]
