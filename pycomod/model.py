@@ -14,7 +14,7 @@ from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
 # Class for building and running the model
 class Model(ABC):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         # Time info
         self._t = SimTime()
@@ -50,7 +50,7 @@ class Model(ABC):
         self._event_queue = []
 
         # Setup
-        self.build()
+        self.build(*args, **kwargs)
         self._register()
 
 
