@@ -1,6 +1,8 @@
 import datetime
-
+import heapq
 import numpy as np
+from types import GeneratorType
+
 
 
 # function to fix the 'other' parameter in operator methods
@@ -38,6 +40,11 @@ class BuildingBlock:
     def save_hist(self):
         self.value_hist.append(self.value)
 
+
+    # pushes a current value on the element including the most recent value in value_hist
+    def push_value(self, value):
+        self.value = value
+        self.value_hist[-1] = value
 
     # Calling the building block returns its most recent value
     # Optional idx parameter used to return past values, e.g. Block(-2) returns
@@ -160,6 +167,9 @@ class SimTime(BuildingBlock):
 
     def update(self, dt):
         self.value = self.value + dt
+        
+#    def event_update(self, t):
+#        self.value = t
 
 
 # Sim time dates
@@ -225,6 +235,16 @@ class Pool(BuildingBlock):
     # Add a flow volume to the pool
     def add_flow(self, volume):
         self.delta += volume
+
+
+    # Actions that can be applied to pools in processes
+    def add(self, amount):
+        self.push_value(self() + amount)
+        
+    def remove(self, amount):
+        self.push_value(self() - amount)
+
+
 
     # Update the value of the pool based on flows affecting the pool
     def update(self):
@@ -306,6 +326,10 @@ class Parameter(BuildingBlock):
     # Parameters accept an initial condition
     def init_cond(self, value):
         super().reset(value)
+        
+    # Can be called by processes to set the value of a parameter
+    def set(self, value):
+        self.push_value(value)
 
 
 # Class representing a constant that is randomly sampled from a distribution at
@@ -412,3 +436,154 @@ class Impulse(Equation):
 
     def update(self, t, dt):
         self.value = self.eq_func(t, dt)
+
+
+
+class Delay:
+    def __init__(self, delay=0):
+        self.delay = delay
+
+
+# individual event on the sim event queue, the routine could be a function or a generator
+class Event:
+    def __init__(self, routine, time=None, args=(), priority=0, origin=None):
+        self.routine = routine
+        self.time = time
+        self.args = args
+        self.priority = priority
+        self.origin = origin
+        self.send = None
+        
+        
+        
+    
+    def resume(self, origin, value, sim_time, event_queue):
+        try:
+            y = origin.routine.send(value)
+            
+            if isinstance(y, Delay):
+                origin.time = sim_time + y.delay
+                heapq.heappush(event_queue, origin)
+                
+            elif isinstance(y, Event):
+                y.origin = origin
+                y.run(sim_time, event_queue)
+            
+            
+        except StopIteration as e:
+            if origin.origin != None:
+                self.resume(origin.origin, e.value, sim_time, event_queue)
+            
+            
+    
+    
+    # run 
+    def run_gen(self, sim_time, event_queue):
+        try:
+            y = next(self.routine)
+            
+            if isinstance(y, Delay):
+                self.time = sim_time + y.delay
+                heapq.heappush(event_queue, self)
+                
+            elif isinstance(y, Event):
+                y.origin = self
+                y.run(sim_time, event_queue)
+                
+            
+        except StopIteration as e:
+            if self.origin != None:
+                self.resume(self.origin, e.value, sim_time, event_queue)
+            
+        
+    # run when event pops off sim queue
+    def run(self, sim_time, event_queue):
+        # if it's a generator
+        if isinstance(self.routine, GeneratorType):
+            self.run_gen(sim_time, event_queue)
+                
+        # else assume it is a function
+        else:
+            
+            #run the function
+            x = self.routine(*self.args)
+            
+            #if the function created a generator, run as a generator
+            if isinstance(x, GeneratorType):
+                self.routine = x
+                self.run_gen(sim_time, event_queue)
+            
+            # else it's a simple function
+            else:
+                if self.origin != None:
+                    self.resume(self.origin, x, sim_time, event_queue)
+            
+    # comparators
+    def __lt__(self, other):
+        if self.time == other.time:
+            return self.priority > other.priority
+        else:
+            return self.time < other.time
+        
+    def __le__(self, other):
+        if self.time == other.time:
+            return self.priority >= other.priority
+        else:
+            return self.time <= other.time
+        
+    def __eq__(self, other):
+        if isinstance(other, Event):
+            if self.time == other.time:
+                return self.priority == other.priority
+            else:
+                return self.time == other.time
+        else:
+            return False
+        
+    def __ne__(self, other):
+        if isinstance(other, Event):
+            if self.time == other.time:
+                return self.priority != other.priority
+            else:
+                return self.time != other.time
+        else:
+            return True
+        
+    def __gt__(self, other):
+        if self.time == other.time:
+            return self.priority < other.priority
+        else:
+            return self.time > other.time
+        
+    def __ge__(self, other):
+        if self.time == other.time:
+            return self.priority <= other.priority
+        else:
+            return self.time >= other.time
+            
+
+
+# Processes are the user created elements that generate events
+class Process:
+    
+    def __init__(self, routine=lambda:1, args=(), time=None, priority=0):
+        self.routine = routine
+        self.args = args
+        self.time = time
+        self.priority = priority
+        
+    # put the event on the queue if a time is specified
+    def reset(self, event_queue):
+        if self.time != None:
+            ev = Event(self.routine, args=self.args, time=self.time, priority=self.priority)
+            heapq.heappush(event_queue, ev)
+            
+    # calling (used when another process yields to this process) returns an event for immediate execution
+    def __call__(self, *args):
+        return Event(self.routine, args=args, time=-1, priority=self.priority)
+
+            
+        
+        
+        
+    

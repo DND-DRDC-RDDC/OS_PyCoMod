@@ -1,31 +1,14 @@
 from abc import ABC, abstractmethod
 
+import heapq
 import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Sample, Equation, Step, Impulse)
+                              Pool, Flow, Parameter, Sample, Equation, Step, Impulse, Process, Delay)
 
 
 
-class event:
-    def __init__(self, init=False, delay=0, priority=0):
-        self.init = init
-        self.delay = delay
-        self.priority = priority
-        
-    def __call__(self, f):
-        class wrapper:
-            def __init__(self, f):
-                #register the event
-                self.f = f
-                
-            def __call__(self):
-                self.f()
-                
-        return wrapper
-                
-    
         
 
 # Class for building and running the model
@@ -49,6 +32,7 @@ class Model(ABC):
         self._equations = []
         self._flows = []
         self._pools = []
+        self._processes = []
 
         # Sub-models
         self._models = []
@@ -113,7 +97,7 @@ class Model(ABC):
         del names['self']
         
         for key, value in names.items():
-            if isinstance(value, BuildingBlock):
+            if isinstance(value, BuildingBlock) or isinstance(value, Model) or isinstance(value, Process):
                 value.name = key
         
         self._available = names
@@ -206,6 +190,55 @@ class Model(ABC):
         self._models.append(m)
         m._event_queue = self._event_queue
         return m
+
+
+    #def process(self, routine=lambda:1, args=None, time=None, priority=0):
+    def process(self, *args, **kwargs):
+        # decorator without parameters or call with process function but no parameters
+        if len(args)==1 and len(kwargs)==0 and callable(args[0]):
+            e = Process(args[0])
+            self._processes.append(e)
+            return e
+            
+        # non-decorator call with process function and optional parameters
+        elif len(args)==1 and len(kwargs)>0 and callable(args[0]):
+            
+            args = ()
+            time = None
+            priority = 0
+            
+            if 'args' in kwargs:
+                args = kwargs['args']
+            if 'time' in kwargs:
+                time = kwargs['time']
+            if 'priority' in kwargs:
+                priority = kwargs['priority']
+            
+            e = Process(args[0], args, time, priority)
+            self._processes.append(e)
+            return e
+        
+        # else assume decorator with params
+        else:
+            args = ()
+            time = None
+            priority = 0
+            
+            if 'args' in kwargs:
+                args = kwargs['args']
+            if 'time' in kwargs:
+                time = kwargs['time']
+            if 'priority' in kwargs:
+                priority = kwargs['priority']
+                
+            def inner(routine):
+                e = Process(routine, args, time, priority)
+                self._processes.append(e)
+                return e
+                
+            return inner
+        
+
 
     def _register(self):
         # Get all attributes that are an instance of BuildingBlock and
@@ -411,6 +444,15 @@ class Model(ABC):
             e.update(self.t(), self.dt())
             e.save_hist()
 
+    def _update_parameters(self):
+        # Recurse through sub-models
+        for m in self._models:
+            m._update_parameters()
+
+        # Duplicate existing parameter value (only updated by events)
+        for e in self._parameters:
+            e.save_hist()
+
 
     def _update_flows(self):
 
@@ -425,36 +467,76 @@ class Model(ABC):
             e.save_hist()
 
     def _update_time(self):
-
+        
         # Recurse through sub-models
         for m in self._models:
             m._update_time()
 
-        # Update time info
+        # # add the new time record without incrementing dt
+        # self.t.update(0)
+        # self.t.save_hist()
+        
+        # # update any between timestep events
+        # self._update_events()
+        
+        # # Update time info after all events
+        # self.t.push_value(self.t(-2) + self.dt())
+        
         self.t.update(self.dt())
         self.t.save_hist()
 
+        # update sim date
         self.date.update(self.dt(), self.tunit())
         self.date.save_hist()
 
-    # Regular update sequence
-    def _update_regular(self):
-
-        self._add_flows()
-        self._update_pools()
-        self._update_equations()
-        self._update_flows()
 
 
+    def _update_events(self):
+        
+        while len(self._event_queue) > 0 and self._event_queue[0].time <= self.t + self.dt:
+            e = heapq.heappop(self._event_queue)
+            e.run(e.time, self._event_queue)
+                
 
-    # Update pass for all model elements
+
+    # # Regular update sequence
+    # def _update_regular(self):
+
+        # self._add_flows()
+        # self._update_pools()
+        
+        
+        
+        # self._update_equations()
+        # self._update_flows()
+
     def _update(self):
-
-        # Update time
+        
+        # update events (events update values in place)
+        self._update_events()
+        
+        self._update_parameters()
+        
+        self._update_equations()
+        
+        self._update_flows()
+        
+        self._add_flows()
+        
+        self._update_pools()
+        
         self._update_time()
 
-        # Update model elements
-        self._update_regular()
+
+
+    # # Update pass for all model elements
+    # def _update(self):
+
+        # # Update time
+        # self._update_time()
+
+        # # Update model elements
+        # self._update_regular()
 
     def _reset_pools(self):
 
@@ -515,6 +597,14 @@ class Model(ABC):
 
         self.t.reset()
         self.date.reset()
+        
+    def _reset_processes(self):
+        # Recurse through sub-models
+        for m in self._models:
+            m._reset_processes()
+           
+        for e in self._processes:
+            e.reset(self._event_queue)
 
     def _reset_output(self):
         self._output = None
@@ -522,8 +612,12 @@ class Model(ABC):
     def _reset_output_mc(self):
         self._output_mc = None
 
+
     # Reset all model elements to initial conditions
     def _reset(self):
+
+        # Empty event queue
+        self._event_queue = []
 
         # Reset time
         self._reset_time()
@@ -535,6 +629,7 @@ class Model(ABC):
         self._reset_samples()
         self._reset_equations()
         self._reset_flows()
+        self._reset_processes()
 
 
     # Save all output

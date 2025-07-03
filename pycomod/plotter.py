@@ -88,12 +88,21 @@ class Plotter:
             cumsum = kwargs['cumsum']
         except KeyError:
             cumsum = False
+            
+        try:
+            step = kwargs['step']
+        except KeyError:
+            step = False
 
         # If cumulative
         if cumsum:
             d = np.cumsum(d)
 
-        self.ax.plot(x, d, color=color, label=label)
+        if step:
+            self.ax.step(x, d, color=color, label=label, where='post')
+        else:
+            self.ax.plot(x, d, color=color, label=label)
+        
 
         self.ax.legend()
 
