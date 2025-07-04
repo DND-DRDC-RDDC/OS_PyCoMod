@@ -18,7 +18,7 @@ def f(other):
 # element
 class BuildingBlock:
 
-    def __init__(self, value=1):
+    def __init__(self, value=1, name=None):
 
         if isinstance(value, list):
             value = np.array(value)
@@ -26,6 +26,8 @@ class BuildingBlock:
         self.init_value = value
         self.value = value
         self.value_hist = [value]  # History of values
+        
+        self.name = name
 
     def reset(self, value=None):
 
@@ -213,8 +215,8 @@ class RunInfo(BuildingBlock):
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, allow_neg=False):
-        super().__init__(value)
+    def __init__(self, value=1, allow_neg=False, name=None):
+        super().__init__(value, name=name)
         self.allow_neg = allow_neg
         self.delta = 0
 
@@ -265,8 +267,8 @@ class Pool(BuildingBlock):
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
-        super().__init__(rate_func())
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, name=None):
+        super().__init__(rate_func(), name=name)
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -317,8 +319,8 @@ class Flow(BuildingBlock):
 class Parameter(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1):
-        super().__init__(value)
+    def __init__(self, value=1, name=None):
+        super().__init__(value, name=name)
 
     def reset(self):
         super().reset()
@@ -350,14 +352,14 @@ class Sample(BuildingBlock):
 class Equation(BuildingBlock):
 
     # Constructor
-    def __init__(self, eq_func=lambda: 1, value=None):
+    def __init__(self, eq_func=lambda: 1, value=None, name=None):
         if value is not None:
-            super().__init__(value)
+            super().__init__(value, name=name)
         else:
             v = eq_func()
             if isinstance(v, BuildingBlock):
                 v = v()
-            super().__init__(v)
+            super().__init__(v, name=name)
         
         self.eq_func = eq_func
 
@@ -380,7 +382,7 @@ class Equation(BuildingBlock):
 
 class Step(Equation):
 
-    def __init__(self, values, times, default=0):
+    def __init__(self, values, times, default=0, name=None):
 
         # Define the step function
         def eq_func(t=0):
@@ -400,7 +402,7 @@ class Step(Equation):
             else:
                 return vals[idx]
 
-        super().__init__(eq_func)
+        super().__init__(eq_func, name=name)
 
     def update(self, t, dt):
         self.value = self.eq_func(t)
@@ -408,7 +410,7 @@ class Step(Equation):
 
 class Impulse(Equation):
 
-    def __init__(self, values, times):
+    def __init__(self, values, times, name=None):
 
         # Define the impulse function
         def eq_func(t=0, dt=1):
@@ -432,7 +434,7 @@ class Impulse(Equation):
             else:
                 return sum(i*j for i, j in zip(vals, y))/dt
 
-        super().__init__(eq_func)
+        super().__init__(eq_func, name=name)
 
     def update(self, t, dt):
         self.value = self.eq_func(t, dt)
@@ -452,7 +454,6 @@ class Event:
         self.args = args
         self.priority = priority
         self.origin = origin
-        self.send = None
         
         
         
@@ -571,6 +572,7 @@ class Process:
         self.args = args
         self.time = time
         self.priority = priority
+        
         
     # put the event on the queue if a time is specified
     def reset(self, event_queue):
