@@ -18,7 +18,7 @@ def f(other):
 # element
 class BuildingBlock:
 
-    def __init__(self, value=1, name=None):
+    def __init__(self, value=1):
 
         if isinstance(value, list):
             value = np.array(value)
@@ -27,7 +27,6 @@ class BuildingBlock:
         self.value = value
         self.value_hist = [value]  # History of values
         
-        self.name = name
 
     def reset(self, value=None):
 
@@ -215,8 +214,8 @@ class RunInfo(BuildingBlock):
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, allow_neg=False, name=None):
-        super().__init__(value, name=name)
+    def __init__(self, value=1, allow_neg=False):
+        super().__init__(value)
         self.allow_neg = allow_neg
         self.delta = 0
 
@@ -267,8 +266,8 @@ class Pool(BuildingBlock):
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, name=None):
-        super().__init__(rate_func(), name=name)
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
+        super().__init__(rate_func())
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -319,8 +318,8 @@ class Flow(BuildingBlock):
 class Parameter(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, name=None):
-        super().__init__(value, name=name)
+    def __init__(self, value=1):
+        super().__init__(value)
 
     def reset(self):
         super().reset()
@@ -334,17 +333,17 @@ class Parameter(BuildingBlock):
         self.push_value(value)
 
 
-# Class representing a constant that is randomly sampled from a distribution at
-# the start of the simulation
-class Sample(BuildingBlock):
+# # Class representing a constant that is randomly sampled from a distribution at
+# # the start of the simulation
+# class Sample(BuildingBlock):
 
-    # Constructor
-    def __init__(self, sample_func=lambda: 1):
-        super().__init__(sample_func())
-        self.sample_func = sample_func
+    # # Constructor
+    # def __init__(self, sample_func=lambda: 1):
+        # super().__init__(sample_func())
+        # self.sample_func = sample_func
 
-    def reset(self):
-        super().reset(self.sample_func())
+    # def reset(self):
+        # super().reset(self.sample_func())
 
 
 # Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
@@ -352,24 +351,21 @@ class Sample(BuildingBlock):
 class Equation(BuildingBlock):
 
     # Constructor
-    def __init__(self, eq_func=lambda: 1, value=None, name=None):
-        if value is not None:
-            super().__init__(value, name=name)
-        else:
-            v = eq_func()
-            if isinstance(v, BuildingBlock):
-                v = v()
-            super().__init__(v, name=name)
+    def __init__(self, eq_func=lambda: 1):
+        v = eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
+        super().__init__(v)
         
         self.eq_func = eq_func
 
     def reset(self):
         
-        #v = self.eq_func()
-        #if isinstance(v, BuildingBlock):
-        #    v = v()
+        v = self.eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
             
-        super().reset()
+        super().reset(v)
 
     def update(self, t, dt):
         
@@ -382,7 +378,7 @@ class Equation(BuildingBlock):
 
 class Step(Equation):
 
-    def __init__(self, values, times, default=0, name=None):
+    def __init__(self, values, times, default=0):
 
         # Define the step function
         def eq_func(t=0):
@@ -402,7 +398,7 @@ class Step(Equation):
             else:
                 return vals[idx]
 
-        super().__init__(eq_func, name=name)
+        super().__init__(eq_func)
 
     def update(self, t, dt):
         self.value = self.eq_func(t)
@@ -410,7 +406,7 @@ class Step(Equation):
 
 class Impulse(Equation):
 
-    def __init__(self, values, times, name=None):
+    def __init__(self, values, times):
 
         # Define the impulse function
         def eq_func(t=0, dt=1):
@@ -434,7 +430,7 @@ class Impulse(Equation):
             else:
                 return sum(i*j for i, j in zip(vals, y))/dt
 
-        super().__init__(eq_func, name=name)
+        super().__init__(eq_func)
 
     def update(self, t, dt):
         self.value = self.eq_func(t, dt)

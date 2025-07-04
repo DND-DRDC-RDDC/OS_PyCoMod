@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Sample, Equation, Step, Impulse, Process, Delay)
+                              Pool, Flow, Parameter, Equation, Step, Impulse, Process, Delay)
 
 
 
@@ -28,7 +28,7 @@ class Model(ABC):
 
         # Model elements
         self._parameters = []
-        self._samples = []
+        #self._samples = []
         self._equations = []
         self._flows = []
         self._pools = []
@@ -51,7 +51,7 @@ class Model(ABC):
 
         # Setup
         self.build(*args, **kwargs)
-        self._register()
+        #self._register()
 
 
     # Read-only properties
@@ -107,9 +107,20 @@ class Model(ABC):
     def __getattr__(self, name):
         return self._available[name]
     
+    
+    # def _add_name(item, name, key):
+        # if name != None:
+            # if key != None:
+                # if name not in self._available:
+                    # self._available[name] = {}
+                # self._available[name][key] = item
+            # else:
+                # self._available[name] = item
+                
+    
     # element creation functions
     def pool(self, value=1, allow_neg=False, name=None):
-        e = Pool(value, allow_neg, name)
+        e = Pool(value, allow_neg)
         self._pools.append(e)
         
         if name != None:
@@ -148,7 +159,7 @@ class Model(ABC):
             if 'name' in kwargs:
                 name = kwargs['name']
             
-            e = Flow(args[0], src, dest, discrete, name)
+            e = Flow(args[0], src, dest, discrete)
             self._flows.append(e)
             
             if name != None:
@@ -174,7 +185,7 @@ class Model(ABC):
                 name = kwargs['name']
                 
             def inner(rate_func):
-                e = Flow(rate_func, src, dest, discrete, name)
+                e = Flow(rate_func, src, dest, discrete)
                 self._flows.append(e)
                 
                 if name != None:
@@ -188,7 +199,7 @@ class Model(ABC):
             
             
     def parameter(self, value=1, name=None):
-        e = Parameter(value, name)
+        e = Parameter(value)
         self._parameters.append(e)
         
         if name != None:
@@ -197,8 +208,8 @@ class Model(ABC):
         
         return e
         
-    def equation(self, eq_func=lambda: 1, value=None, name=None):
-        e = Equation(eq_func, value, name)
+    def equation(self, eq_func=lambda: 1, name=None):
+        e = Equation(eq_func)
         self._equations.append(e)
         
         if name != None:
@@ -208,7 +219,7 @@ class Model(ABC):
         return e
         
     def step(self, values, times, default=0, name=None):
-        e = Step(values, times, default, name)
+        e = Step(values, times, default)
         self._equations.append(e)
         
         if name != None:
@@ -218,7 +229,7 @@ class Model(ABC):
         return e       
      
     def impulse(self, values, times, name=None):
-        e = Impulse(values, times, name)
+        e = Impulse(values, times)
         self._equations.append(e)
         
         if name != None:
@@ -303,28 +314,28 @@ class Model(ABC):
         
 
 
-    def _register(self):
-        # Get all attributes that are an instance of BuildingBlock and
-        # organize them into lists
+    # def _register(self):
+        # # Get all attributes that are an instance of BuildingBlock and
+        # # organize them into lists
 
-        elements = [x for x in self.__dict__.values()
-                    if isinstance(x, (BuildingBlock, Model))]
+        # elements = [x for x in self.__dict__.values()
+                    # if isinstance(x, (BuildingBlock, Model))]
 
-        for e in elements:
-            if isinstance(e, Sample):
-                self._samples.append(e)
-            #elif isinstance(e, Parameter):
-            #    self._parameters.append(e)
-            #elif isinstance(e, Equation):
-            #    self._equations.append(e)
-            #elif isinstance(e, Flow):
-            #    self._flows.append(e)
-            #elif isinstance(e, Pool):
-            #    self._pools.append(e)
-            #elif isinstance(e, Model):
-            #    self._models.append(e)
-                #all sub-models share the root event queue
-            #    e._event_queue = self._event_queue
+        # for e in elements:
+            # if isinstance(e, Sample):
+                # self._samples.append(e)
+            # #elif isinstance(e, Parameter):
+            # #    self._parameters.append(e)
+            # #elif isinstance(e, Equation):
+            # #    self._equations.append(e)
+            # #elif isinstance(e, Flow):
+            # #    self._flows.append(e)
+            # #elif isinstance(e, Pool):
+            # #    self._pools.append(e)
+            # #elif isinstance(e, Model):
+            # #    self._models.append(e)
+                # #all sub-models share the root event queue
+            # #    e._event_queue = self._event_queue
 
 
 
@@ -621,15 +632,15 @@ class Model(ABC):
         for e in self._parameters:
             e.reset()
 
-    def _reset_samples(self):
+    # def _reset_samples(self):
 
-        # Recurse through sub-models
-        for m in self._models:
-            m._reset_samples()
+        # # Recurse through sub-models
+        # for m in self._models:
+            # m._reset_samples()
 
-        # Reset samples
-        for e in self._samples:
-            e.reset()
+        # # Reset samples
+        # for e in self._samples:
+            # e.reset()
 
     def _reset_equations(self):
 
@@ -689,7 +700,7 @@ class Model(ABC):
         # Reset all elements
         self._reset_pools()
         self._reset_parameters()
-        self._reset_samples()
+        # self._reset_samples()
         self._reset_equations()
         self._reset_flows()
         self._reset_processes()

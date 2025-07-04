@@ -1,4 +1,4 @@
-from .elements import (Pool, Flow, Parameter, Sample,
+from .elements import (Pool, Flow, Parameter,
                               Equation, Step, Impulse, Process, Delay)
 from .model import Model
 from .manager import RunManager
