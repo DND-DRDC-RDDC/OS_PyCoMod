@@ -18,14 +18,19 @@ def f(other):
 # element
 class BuildingBlock:
 
-    def __init__(self, value=1):
+    def __init__(self, value=1, parent=None):
 
         if isinstance(value, list):
             value = np.array(value)
 
         self.init_value = value
         self.value = value
+        self.time = 0
         self.value_hist = [value]  # History of values
+        self.time_hist = [0]
+        
+        self.parent = parent
+        
         
 
     def reset(self, value=None):
@@ -37,28 +42,40 @@ class BuildingBlock:
 
         self.value = self.init_value
         self.value_hist = [self.init_value]
+        self.time_hist = [0]
+
+
+    def update_value(self, value):
+        self.value = value
+        self.time = self.parent.t
+
 
     def save_hist(self):
         self.value_hist.append(self.value)
+        self.time_hist.append(self.time)
 
 
     # pushes a current value on the element including the most recent value in value_hist
-    def push_value(self, value):
+    def push_value(self, value, time):
         self.value = value
         self.value_hist[-1] = value
+        self.time = time
+        self.time_hist[-1] = time
 
     # Calling the building block returns its most recent value
     # Optional idx parameter used to return past values, e.g. Block(-2) returns
     # value from two timesteps ago
-    def __call__(self, idx=-1):
-        if idx < 0:
-            try:
-                return self.value_hist[idx]
-            except IndexError:
-                return self.init_value
-        else:
-            raise Exception("Index must be negative to reference past value. "
-                            "Can't reference present or future value.")
+    def __call__(self):
+        return self.value_hist[-1]
+        
+        # if idx < 0:
+            # try:
+                # return self.value_hist[idx]
+            # except IndexError:
+                # return self.init_value
+        # else:
+            # raise Exception("Index must be negative to reference past value. "
+                            # "Can't reference present or future value.")
 
     # Get the time series data for this element as a numpy array
     def get_hist(self):
@@ -214,8 +231,8 @@ class RunInfo(BuildingBlock):
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, allow_neg=False):
-        super().__init__(value)
+    def __init__(self, value=1, allow_neg=False, parent=None):
+        super().__init__(value, parent)
         self.allow_neg = allow_neg
         self.delta = 0
 
@@ -240,21 +257,31 @@ class Pool(BuildingBlock):
 
     # Actions that can be applied to pools in processes
     def add(self, amount):
-        self.push_value(self() + amount)
+        #self.push_value(self() + amount)
+        self.update_value(self.value + amount)
+        self.save_hist()
+
         
     def remove(self, amount):
-        self.push_value(self() - amount)
+        #self.push_value(self() - amount)
+        self.update_value(self.value - amount)
+        self.save_hist()
 
 
 
     # Update the value of the pool based on flows affecting the pool
     def update(self):
         # Be careful: numpy arrays treat += as self-modifying
-        self.value = self.value + self.delta
-
+        #self.value = self.value + self.delta
+        #self.time = t
+        
+        v = self.value + self.delta
+        
         # Prevent negative values for pool (this needs more thought)
         if not self.allow_neg:
-            self.value = np.maximum(self.value, 0)
+            v = np.maximum(v, 0)
+        
+        self.update_value(v)
 
         self.reset_flows()
 
@@ -266,21 +293,30 @@ class Pool(BuildingBlock):
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
-        super().__init__(rate_func())
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, parent=None):
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
-        #self.priority = priority
-        #self.init = init
         self.discrete = discrete
         self.rem = 0
+        
+        
+        v = self.rate_func() * parent.dt
+        
+        if self.discrete:
+            v_ = round(v,0)
+            self.rem = v - v_
+            v = v_
+        
+        
+        super().__init__(v, parent)
+
 
     # Reset rate values
-    def reset(self, dt):
+    def reset(self):
         self.rem = 0
 
-        v = self.rate_func()*dt + self.rem
+        v = self.rate_func() * self.parent.dt
         
         if self.discrete:
             v_ = round(v,0)
@@ -290,18 +326,17 @@ class Flow(BuildingBlock):
         super().reset(v)
         
     # Update the flow
-    def update(self, dt):
+    def update(self):
         
-        v = self.rate_func()*dt + self.rem
+        v = self.rate_func()*self.parent.dt + self.rem
         
         if self.discrete:
             v_ = round(v,0)
             self.rem = v - v_
             v = v_
         
-        self.value = v
-        #if self.init:
-        #    self.value = self.value * 0
+        self.update_value(v)
+
 
     # Add flows to the src and dest pools
     def add_flows(self):
@@ -318,8 +353,8 @@ class Flow(BuildingBlock):
 class Parameter(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1):
-        super().__init__(value)
+    def __init__(self, value=1, parent=None):
+        super().__init__(value, parent)
 
     def reset(self):
         super().reset()
@@ -330,7 +365,8 @@ class Parameter(BuildingBlock):
         
     # Can be called by processes to set the value of a parameter
     def set(self, value):
-        self.push_value(value)
+        self.update_value(value)
+        self.save_hist()
 
 
 # # Class representing a constant that is randomly sampled from a distribution at
@@ -351,11 +387,11 @@ class Parameter(BuildingBlock):
 class Equation(BuildingBlock):
 
     # Constructor
-    def __init__(self, eq_func=lambda: 1):
+    def __init__(self, eq_func=lambda: 1, parent=None):
         v = eq_func()
         if isinstance(v, BuildingBlock):
             v = v()
-        super().__init__(v)
+        super().__init__(v, parent)
         
         self.eq_func = eq_func
 
@@ -367,18 +403,18 @@ class Equation(BuildingBlock):
             
         super().reset(v)
 
-    def update(self, t, dt):
+    def update(self):
         
         v = self.eq_func()
         if isinstance(v, BuildingBlock):
             v = v()
         
-        self.value = v
+        self.update_value(v)
 
 
 class Step(Equation):
 
-    def __init__(self, values, times, default=0):
+    def __init__(self, values, times, default=0, parent=None):
 
         # Define the step function
         def eq_func(t=0):
@@ -398,15 +434,16 @@ class Step(Equation):
             else:
                 return vals[idx]
 
-        super().__init__(eq_func)
+        super().__init__(eq_func, parent)
+        
 
-    def update(self, t, dt):
-        self.value = self.eq_func(t)
+    def update(self):
+        self.update_value(self.eq_func(self.parent.t))
 
 
 class Impulse(Equation):
 
-    def __init__(self, values, times):
+    def __init__(self, values, times, parent=None):
 
         # Define the impulse function
         def eq_func(t=0, dt=1):
@@ -430,10 +467,10 @@ class Impulse(Equation):
             else:
                 return sum(i*j for i, j in zip(vals, y))/dt
 
-        super().__init__(eq_func)
+        super().__init__(eq_func, parent)
 
-    def update(self, t, dt):
-        self.value = self.eq_func(t, dt)
+    def update(self):
+        self.update_value(self.eq_func(self.parent.t, self.parent.dt))
 
 
 
@@ -444,12 +481,14 @@ class Delay:
 
 # individual event on the sim event queue, the routine could be a function or a generator
 class Event:
-    def __init__(self, routine, time=None, args=(), priority=0, origin=None):
+    def __init__(self, routine, time=None, args=(), priority=0, origin=None, parent=None):
         self.routine = routine
         self.time = time
         self.args = args
         self.priority = priority
         self.origin = origin
+        
+        self.parent = parent
         
         
         
@@ -563,22 +602,24 @@ class Event:
 # Processes are the user created elements that generate events
 class Process:
     
-    def __init__(self, routine=lambda:1, args=(), time=None, priority=0):
+    def __init__(self, routine=lambda:1, args=(), time=None, priority=0, parent=None):
         self.routine = routine
         self.args = args
         self.time = time
         self.priority = priority
         
+        self.parent = parent
+        
         
     # put the event on the queue if a time is specified
-    def reset(self, event_queue):
+    def reset(self):
         if self.time != None:
-            ev = Event(self.routine, args=self.args, time=self.time, priority=self.priority)
-            heapq.heappush(event_queue, ev)
+            ev = Event(self.routine, args=self.args, time=self.time, priority=self.priority, parent=self.parent)
+            heapq.heappush(self.parent._event_queue, ev)
             
     # calling (used when another process yields to this process) returns an event for immediate execution
     def __call__(self, *args):
-        return Event(self.routine, args=args, time=-1, priority=self.priority)
+        return Event(self.routine, args=args, time=-1, priority=self.priority, parent=self.parent)
 
             
         

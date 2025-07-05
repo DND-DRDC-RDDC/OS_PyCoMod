@@ -28,7 +28,6 @@ class Model(ABC):
 
         # Model elements
         self._parameters = []
-        #self._samples = []
         self._equations = []
         self._flows = []
         self._pools = []
@@ -120,7 +119,7 @@ class Model(ABC):
     
     # element creation functions
     def pool(self, value=1, allow_neg=False, name=None):
-        e = Pool(value, allow_neg)
+        e = Pool(value, allow_neg, parent=self)
         self._pools.append(e)
         
         if name != None:
@@ -138,7 +137,7 @@ class Model(ABC):
         # decorator without parameters or call with flow function but no parameters
         # a flow without src or dest args is useless, but syntactically allowed
         if len(args)==1 and len(kwargs)==0 and callable(args[0]):
-            e = Flow(args[0])
+            e = Flow(args[0], parent=self)
             self._flows.append(e)
             return e
             
@@ -159,7 +158,7 @@ class Model(ABC):
             if 'name' in kwargs:
                 name = kwargs['name']
             
-            e = Flow(args[0], src, dest, discrete)
+            e = Flow(args[0], src, dest, discrete, parent=self)
             self._flows.append(e)
             
             if name != None:
@@ -185,7 +184,7 @@ class Model(ABC):
                 name = kwargs['name']
                 
             def inner(rate_func):
-                e = Flow(rate_func, src, dest, discrete)
+                e = Flow(rate_func, src, dest, discrete, parent=self)
                 self._flows.append(e)
                 
                 if name != None:
@@ -199,7 +198,7 @@ class Model(ABC):
             
             
     def parameter(self, value=1, name=None):
-        e = Parameter(value)
+        e = Parameter(value, parent=self)
         self._parameters.append(e)
         
         if name != None:
@@ -209,7 +208,7 @@ class Model(ABC):
         return e
         
     def equation(self, eq_func=lambda: 1, name=None):
-        e = Equation(eq_func)
+        e = Equation(eq_func, parent=self)
         self._equations.append(e)
         
         if name != None:
@@ -219,7 +218,7 @@ class Model(ABC):
         return e
         
     def step(self, values, times, default=0, name=None):
-        e = Step(values, times, default)
+        e = Step(values, times, default, parent=self)
         self._equations.append(e)
         
         if name != None:
@@ -229,7 +228,7 @@ class Model(ABC):
         return e       
      
     def impulse(self, values, times, name=None):
-        e = Impulse(values, times)
+        e = Impulse(values, times, parent=self)
         self._equations.append(e)
         
         if name != None:
@@ -241,6 +240,8 @@ class Model(ABC):
     def submodel(self, m, name=None):
         self._models.append(m)
         m._event_queue = self._event_queue
+        m._t = self._t
+        m._date = self._date
         
         if name != None:
             self._available[name] = m
@@ -515,17 +516,17 @@ class Model(ABC):
 
         # Update equations (in order)
         for e in self._equations:
-            e.update(self.t(), self.dt())
+            e.update()
             e.save_hist()
 
-    def _update_parameters(self):
-        # Recurse through sub-models
-        for m in self._models:
-            m._update_parameters()
+    # def _update_parameters(self):
+        # # Recurse through sub-models
+        # for m in self._models:
+            # m._update_parameters()
 
-        # Duplicate existing parameter value (only updated by events)
-        for e in self._parameters:
-            e.save_hist()
+        # # Duplicate existing parameter value (only updated by events)
+        # for e in self._parameters:
+            # e.save_hist()
 
 
     def _update_flows(self):
@@ -536,7 +537,7 @@ class Model(ABC):
 
         # Update flows (order independent)
         for e in self._flows:
-            e.update(self.dt())
+            e.update()
         for e in self._flows:
             e.save_hist()
 
@@ -589,7 +590,7 @@ class Model(ABC):
         # update events (events update values in place)
         self._update_events()
         
-        self._update_parameters()
+        #self._update_parameters()
         
         self._update_equations()
         
@@ -661,7 +662,7 @@ class Model(ABC):
 
         # Reset samples
         for e in self._flows:
-            e.reset(self.dt)
+            e.reset()
 
     def _reset_time(self):
 
