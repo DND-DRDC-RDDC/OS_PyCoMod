@@ -47,7 +47,7 @@ class BuildingBlock:
 
     def update_value(self, value):
         self.value = value
-        self.time = self.parent.t
+        self.time = self.parent.t()
 
 
     def save_hist(self):
@@ -56,11 +56,11 @@ class BuildingBlock:
 
 
     # pushes a current value on the element including the most recent value in value_hist
-    def push_value(self, value, time):
+    def push_value(self, value):
         self.value = value
         self.value_hist[-1] = value
-        self.time = time
-        self.time_hist[-1] = time
+        self.time = self.parent.t()
+        self.time_hist[-1] = self.parent.t()
 
     # Calling the building block returns its most recent value
     # Optional idx parameter used to return past values, e.g. Block(-2) returns
@@ -79,7 +79,9 @@ class BuildingBlock:
 
     # Get the time series data for this element as a numpy array
     def get_hist(self):
-        return np.array(self.value_hist)
+        
+        return {'values': np.array(self.value_hist), 'times': np.array(self.time_hist)}
+        
 
 
 
@@ -174,8 +176,8 @@ class BuildingBlock:
 # Sim time
 class SimTime(BuildingBlock):
 
-    def __init__(self, value=0):
-        super().__init__(value)
+    def __init__(self, value=0, parent=None):
+        super().__init__(value, parent)
 
     def reset(self):
         super().reset()
@@ -183,8 +185,10 @@ class SimTime(BuildingBlock):
     def init_cond(self, value):
         super().reset(value)
 
-    def update(self, dt):
-        self.value = self.value + dt
+    def update(self, t):
+        #elf.value = self.value + dt
+        
+        self.update_value(t)
         
 #    def event_update(self, t):
 #        self.value = t
@@ -257,15 +261,23 @@ class Pool(BuildingBlock):
 
     # Actions that can be applied to pools in processes
     def add(self, amount):
-        #self.push_value(self() + amount)
-        self.update_value(self.value + amount)
-        self.save_hist()
+        v = self.value + amount
+        
+        if self.parent.t() == 0:
+            self.push_value(v)
+        else:
+            self.update_value(v)
+            self.save_hist()
 
         
     def remove(self, amount):
-        #self.push_value(self() - amount)
-        self.update_value(self.value - amount)
-        self.save_hist()
+        v = self.value - amount
+
+        if self.parent.t() == 0:
+            self.push_value(v)
+        else:
+            self.update_value(v)
+            self.save_hist()
 
 
 
@@ -316,7 +328,7 @@ class Flow(BuildingBlock):
     def reset(self):
         self.rem = 0
 
-        v = self.rate_func() * self.parent.dt
+        v = self.rate_func() * self.parent.dt()
         
         if self.discrete:
             v_ = round(v,0)
@@ -328,7 +340,7 @@ class Flow(BuildingBlock):
     # Update the flow
     def update(self):
         
-        v = self.rate_func()*self.parent.dt + self.rem
+        v = self.rate_func()*self.parent.dt() + self.rem
         
         if self.discrete:
             v_ = round(v,0)
@@ -365,8 +377,12 @@ class Parameter(BuildingBlock):
         
     # Can be called by processes to set the value of a parameter
     def set(self, value):
-        self.update_value(value)
-        self.save_hist()
+        
+        if self.parent.t() == 0:
+            self.push_value(value)
+        else:
+            self.update_value(value)
+            self.save_hist()
 
 
 # # Class representing a constant that is randomly sampled from a distribution at
@@ -438,7 +454,7 @@ class Step(Equation):
         
 
     def update(self):
-        self.update_value(self.eq_func(self.parent.t))
+        self.update_value(self.eq_func(self.parent.t()))
 
 
 class Impulse(Equation):
@@ -470,7 +486,7 @@ class Impulse(Equation):
         super().__init__(eq_func, parent)
 
     def update(self):
-        self.update_value(self.eq_func(self.parent.t, self.parent.dt))
+        self.update_value(self.eq_func(self.parent.t(), self.parent.dt()))
 
 
 
@@ -493,50 +509,109 @@ class Event:
         
         
     
-    def resume(self, origin, value, sim_time, event_queue):
+    # def resume(self, origin, value, sim_time, event_queue):
+        # try:
+            # y = origin.routine.send(value)
+            
+            # if isinstance(y, Delay):
+                # origin.time = sim_time + y.delay
+                # heapq.heappush(event_queue, origin)
+                
+            # elif isinstance(y, Event):
+                # y.origin = origin
+                # y.run(sim_time, event_queue)
+            
+            
+        # except StopIteration as e:
+            # if origin.origin != None:
+                # self.resume(origin.origin, e.value, sim_time, event_queue)
+            
+            
+    def resume(self, origin, value):
         try:
             y = origin.routine.send(value)
             
             if isinstance(y, Delay):
-                origin.time = sim_time + y.delay
-                heapq.heappush(event_queue, origin)
+                origin.time = self.parent.t() + y.delay
+                heapq.heappush(self.parent._event_queue, origin)
                 
             elif isinstance(y, Event):
                 y.origin = origin
-                y.run(sim_time, event_queue)
+                y.run()
             
             
         except StopIteration as e:
             if origin.origin != None:
-                self.resume(origin.origin, e.value, sim_time, event_queue)
+                self.resume(origin.origin, e.value)
             
             
     
-    
+    # # run 
+    # def run_gen(self, sim_time, event_queue):
+        # try:
+            # y = next(self.routine)
+            
+            # if isinstance(y, Delay):
+                # self.time = sim_time + y.delay
+                # heapq.heappush(event_queue, self)
+                
+            # elif isinstance(y, Event):
+                # y.origin = self
+                # y.run(sim_time, event_queue)
+                
+            
+        # except StopIteration as e:
+            # if self.origin != None:
+                # self.resume(self.origin, e.value, sim_time, event_queue)
+            
+        
     # run 
-    def run_gen(self, sim_time, event_queue):
+    def run_gen(self):
         try:
             y = next(self.routine)
             
             if isinstance(y, Delay):
-                self.time = sim_time + y.delay
-                heapq.heappush(event_queue, self)
+                self.time = self.parent.t() + y.delay
+                heapq.heappush(self.parent._event_queue, self)
                 
             elif isinstance(y, Event):
                 y.origin = self
-                y.run(sim_time, event_queue)
+                y.run()
                 
             
         except StopIteration as e:
             if self.origin != None:
-                self.resume(self.origin, e.value, sim_time, event_queue)
-            
+                self.resume(self.origin, e.value)
         
+        
+    # # run when event pops off sim queue
+    # def run(self, sim_time, event_queue):
+        # # if it's a generator
+        # if isinstance(self.routine, GeneratorType):
+            # self.run_gen(sim_time, event_queue)
+                
+        # # else assume it is a function
+        # else:
+            
+            # #run the function
+            # x = self.routine(*self.args)
+            
+            # #if the function created a generator, run as a generator
+            # if isinstance(x, GeneratorType):
+                # self.routine = x
+                # self.run_gen(sim_time, event_queue)
+            
+            # # else it's a simple function
+            # else:
+                # if self.origin != None:
+                    # self.resume(self.origin, x, sim_time, event_queue)
+            
+            
     # run when event pops off sim queue
-    def run(self, sim_time, event_queue):
+    def run(self):
         # if it's a generator
         if isinstance(self.routine, GeneratorType):
-            self.run_gen(sim_time, event_queue)
+            self.run_gen()
                 
         # else assume it is a function
         else:
@@ -547,12 +622,13 @@ class Event:
             #if the function created a generator, run as a generator
             if isinstance(x, GeneratorType):
                 self.routine = x
-                self.run_gen(sim_time, event_queue)
+                self.run_gen()
             
             # else it's a simple function
             else:
                 if self.origin != None:
-                    self.resume(self.origin, x, sim_time, event_queue)
+                    self.resume(self.origin, x)
+            
             
     # comparators
     def __lt__(self, other):

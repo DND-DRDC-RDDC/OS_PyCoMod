@@ -48,31 +48,37 @@ class Plotter:
         if self.fig is None:
             self.setup()
 
-        x = run['x_dates']
+        # x = run['x_dates']
 
-        # Init timeseries data for plotting
-        d = np.zeros(len(x))
+        # # Init timeseries data for plotting
+        # d = np.zeros(len(x))
 
-        # Parse elements: remove whitespace and split on +
-        elements = elements.replace(' ', '').split('+')
+        # # Parse elements: remove whitespace and split on +
+        # elements = elements.replace(' ', '').split('+')
 
-        # For each supplied element
-        for s in elements:
+        # # For each supplied element
+        # for s in elements:
 
-            # Split breadcrumbs
-            s = s.split('.')
+            # # Split breadcrumbs
+            # s = s.split('.')
 
-            # Get the data
-            data = run['output']
-            for e in s:
-                data = data[e]
+            # # Get the data
+            # data = run['output']
+            # for e in s:
+                # data = data[e]
 
-            # If data is 2d (meaning it includes cohorts), sum across cohorts
-            if data.ndim == 2:
-                data = data.sum(axis=1)
+            # # If data is 2d (meaning it includes cohorts), sum across cohorts
+            # if data.ndim == 2:
+                # data = data.sum(axis=1)
 
-            # Append to data
+            # # Append to data
             d = d + data
+            
+            
+        data = run['output'][elements]
+        d = data['values']
+        x = data['times']
+        
 
         try:
             color = kwargs['color']

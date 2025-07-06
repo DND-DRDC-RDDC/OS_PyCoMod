@@ -17,7 +17,7 @@ class Model(ABC):
     def __init__(self, *args, **kwargs):
 
         # Time info
-        self._t = SimTime()
+        self._t = SimTime(0, self)
         self._date = SimDate()
         self._tunit = RunInfo(np.timedelta64(1, 'D'))
 
@@ -50,7 +50,6 @@ class Model(ABC):
 
         # Setup
         self.build(*args, **kwargs)
-        #self._register()
 
 
     # Read-only properties
@@ -238,11 +237,12 @@ class Model(ABC):
         return e
 
     def submodel(self, m, name=None):
-        self._models.append(m)
-        m._event_queue = self._event_queue
-        m._t = self._t
-        m._date = self._date
+        #m._event_queue = self._event_queue
+        #m._t = self._t
+        #m._date = self._date 
         
+        self._models.append(m)
+
         if name != None:
             self._available[name] = m
             self._out.append(name)
@@ -254,7 +254,7 @@ class Model(ABC):
     def process(self, *args, **kwargs):
         # decorator without parameters or call with process function but no parameters
         if len(args)==1 and len(kwargs)==0 and callable(args[0]):
-            e = Process(args[0])
+            e = Process(args[0], parent=self)
             self._processes.append(e)
             return e
             
@@ -275,7 +275,7 @@ class Model(ABC):
             if 'name' in kwargs:
                 name = kwargs['name']
             
-            e = Process(args[0], args, time, priority)
+            e = Process(args[0], args, time, priority, parent=self)
             self._processes.append(e)
             
             if name != None:
@@ -301,7 +301,7 @@ class Model(ABC):
                 name = kwargs['name']
                 
             def inner(routine):
-                e = Process(routine, args, time, priority)
+                e = Process(routine, args, time, priority, parent=self)
                 self._processes.append(e)
                 
                 if name != None:
@@ -541,11 +541,11 @@ class Model(ABC):
         for e in self._flows:
             e.save_hist()
 
-    def _update_time(self):
+    def _update_time(self, t):
         
         # Recurse through sub-models
-        for m in self._models:
-            m._update_time()
+        #for m in self._models:
+        #    m._update_time(t)
 
         # # add the new time record without incrementing dt
         # self.t.update(0)
@@ -557,20 +557,24 @@ class Model(ABC):
         # # Update time info after all events
         # self.t.push_value(self.t(-2) + self.dt())
         
-        self.t.update(self.dt())
-        self.t.save_hist()
+        #self.t.update(t)
+        #self.t.save_hist()
+        
+        self.t.push_value(t)
 
         # update sim date
-        self.date.update(self.dt(), self.tunit())
-        self.date.save_hist()
+        #self.date.update(self.dt(), self.tunit())
+        #self.date.save_hist()
 
 
 
-    def _update_events(self):
+    #update events until t_next
+    def _update_events(self, t_next):
         
-        while len(self._event_queue) > 0 and self._event_queue[0].time <= self.t + self.dt:
+        while len(self._event_queue) > 0 and self._event_queue[0].time <= t_next:
             e = heapq.heappop(self._event_queue)
-            e.run(e.time, self._event_queue)
+            self.t.push_value(e.time)
+            e.run()
                 
 
 
@@ -587,10 +591,14 @@ class Model(ABC):
 
     def _update(self):
         
+        t_next = self.t() + self.dt()
+        
         # update events (events update values in place)
-        self._update_events()
+        self._update_events(t_next)
         
         #self._update_parameters()
+        
+        self._update_time(t_next)
         
         self._update_equations()
         
@@ -600,7 +608,7 @@ class Model(ABC):
         
         self._update_pools()
         
-        self._update_time()
+
 
 
 
@@ -664,14 +672,35 @@ class Model(ABC):
         for e in self._flows:
             e.reset()
 
-    def _reset_time(self):
+    # def _reset_time(self):
 
-        # Recurse through sub-models
-        for m in self._models:
-            m._reset_time()
+        # # Recurse through sub-models
+        # for m in self._models:
+            # m._reset_time()
 
+        # self.t.reset()
+        # self.date.reset()
+        
+    def _reset_time(self, sim_time=None, event_queue=None):
+        
+        self._event_queue = []
         self.t.reset()
         self.date.reset()
+        
+        # push the root time and event queue down to all child models
+        if sim_time == None:
+            sim_time = self._t
+        else:
+            self._t = sim_time
+            
+        if event_queue == None:
+            event_queue = self._event_queue
+        else:
+            self._event_queue = event_queue
+            
+        for m in self._models:
+            m._reset_time(sim_time, event_queue)
+        
         
     def _reset_processes(self):
         # Recurse through sub-models
@@ -679,7 +708,7 @@ class Model(ABC):
             m._reset_processes()
            
         for e in self._processes:
-            e.reset(self._event_queue)
+            e.reset()
 
     def _reset_output(self):
         self._output = None
@@ -692,7 +721,7 @@ class Model(ABC):
     def _reset(self):
 
         # Empty event queue
-        self._event_queue = []
+        #self._event_queue = []
 
         # Reset time
         self._reset_time()
@@ -725,10 +754,10 @@ class Model(ABC):
 
     def start_process(self, event, delay=0):
         if delay > 0:
-            event.time = self._t + delay
+            event.time = self.t() + delay
             heapq.heappush(self._event_queue, event)
         else:
-            event.run(self._t(), self._event_queue)
+            event.run()
         
 
     # Do a run
