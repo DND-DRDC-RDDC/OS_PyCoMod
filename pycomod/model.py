@@ -519,14 +519,15 @@ class Model(ABC):
             e.update()
             e.save_hist()
 
-    # def _update_parameters(self):
-        # # Recurse through sub-models
-        # for m in self._models:
-            # m._update_parameters()
+    def _update_parameters(self):
+        # Recurse through sub-models
+        for m in self._models:
+            m._update_parameters()
 
-        # # Duplicate existing parameter value (only updated by events)
-        # for e in self._parameters:
-            # e.save_hist()
+        # Duplicate existing parameter value (only updated by events)
+        for e in self._parameters:
+            e.update_value(e.value)
+            e.save_hist()
 
 
     def _update_flows(self):
@@ -730,7 +731,6 @@ class Model(ABC):
         # Reset all elements
         self._reset_pools()
         self._reset_parameters()
-        # self._reset_samples()
         self._reset_equations()
         self._reset_flows()
         self._reset_processes()
@@ -795,6 +795,9 @@ class Model(ABC):
 
             # Update model elements
             self._update()
+
+        
+        self._update_parameters()
 
         # Save output
         self._save_output()
