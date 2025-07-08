@@ -72,7 +72,7 @@ class Plotter:
                 # data = data.sum(axis=1)
 
             # # Append to data
-            d = d + data
+            #d = d + data
             
             
         data = run['output'][elements]
