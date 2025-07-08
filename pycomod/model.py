@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Sample, Equation, Step, Impulse, Process, Delay)
+                              Pool, Flow, Parameter, Equation, Step, Impulse, Process, Delay)
 
 
 
@@ -28,7 +28,7 @@ class Model(ABC):
 
         # Model elements
         self._parameters = []
-        self._samples = []
+        #self._samples = []
         self._equations = []
         self._flows = []
         self._pools = []
@@ -41,7 +41,7 @@ class Model(ABC):
         self._available = {}
 
         # Output
-        self._out = None  # Elements to track for output
+        self._out = []  # Elements to track for output
         self._output = None  # Output from run
         self._output_mc = None  # Output from mc runs
 
@@ -51,7 +51,9 @@ class Model(ABC):
 
         # Setup
         self.build(*args, **kwargs)
-        self._register()
+
+        #self._register()
+
 
 
     # Read-only properties
@@ -107,10 +109,26 @@ class Model(ABC):
     def __getattr__(self, name):
         return self._available[name]
     
+    
+    # def _add_name(item, name, key):
+        # if name != None:
+            # if key != None:
+                # if name not in self._available:
+                    # self._available[name] = {}
+                # self._available[name][key] = item
+            # else:
+                # self._available[name] = item
+                
+    
     # element creation functions
-    def pool(self, value=1, allow_neg=False):
+    def pool(self, value=1, allow_neg=False, name=None):
         e = Pool(value, allow_neg)
         self._pools.append(e)
+        
+        if name != None:
+            self._available[name] = e
+            self._out.append(name)
+        
         return e
         
     # def flow(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
@@ -132,6 +150,7 @@ class Model(ABC):
             src = None
             dest = None
             discrete = False
+            name = None
             
             if 'src' in kwargs:
                 src = kwargs['src']
@@ -139,9 +158,16 @@ class Model(ABC):
                 dest = kwargs['dest']
             if 'discrete' in kwargs:
                 discrete = kwargs['discrete']
+            if 'name' in kwargs:
+                name = kwargs['name']
             
             e = Flow(args[0], src, dest, discrete)
             self._flows.append(e)
+            
+            if name != None:
+                self._available[name] = e
+                self._out.append(name)
+            
             return e
         
         # else assume decorator with params
@@ -149,6 +175,7 @@ class Model(ABC):
             src = None
             dest = None
             discrete = False
+            name = None
             
             if 'src' in kwargs:
                 src = kwargs['src']
@@ -156,39 +183,71 @@ class Model(ABC):
                 dest = kwargs['dest']
             if 'discrete' in kwargs:
                 discrete = kwargs['discrete']
+            if 'name' in kwargs:
+                name = kwargs['name']
                 
             def inner(rate_func):
                 e = Flow(rate_func, src, dest, discrete)
                 self._flows.append(e)
+                
+                if name != None:
+                    self._available[name] = e
+                    self._out.append(name)
+                
                 return e
                 
             return inner
         
             
             
-    def parameter(self, value=1):
+    def parameter(self, value=1, name=None):
         e = Parameter(value)
         self._parameters.append(e)
+        
+        if name != None:
+            self._available[name] = e
+            self._out.append(name)
+        
         return e
         
-    def equation(self, eq_func=lambda: 1, value=None):
-        e = Equation(eq_func, value)
+    def equation(self, eq_func=lambda: 1, name=None):
+        e = Equation(eq_func)
         self._equations.append(e)
+        
+        if name != None:
+            self._available[name] = e
+            self._out.append(name)
+        
         return e
         
-    def step(self, values, times, default=0):
+    def step(self, values, times, default=0, name=None):
         e = Step(values, times, default)
         self._equations.append(e)
+        
+        if name != None:
+            self._available[name] = e
+            self._out.append(name)
+        
         return e       
      
-    def impulse(self, values, times):
+    def impulse(self, values, times, name=None):
         e = Impulse(values, times)
         self._equations.append(e)
+        
+        if name != None:
+            self._available[name] = e
+            self._out.append(name)
+        
         return e
 
-    def submodel(self, m):
+    def submodel(self, m, name=None):
         self._models.append(m)
         m._event_queue = self._event_queue
+        
+        if name != None:
+            self._available[name] = m
+            self._out.append(name)
+        
         return m
 
 
@@ -206,6 +265,7 @@ class Model(ABC):
             args = ()
             time = None
             priority = 0
+            name = None
             
             if 'args' in kwargs:
                 args = kwargs['args']
@@ -213,9 +273,16 @@ class Model(ABC):
                 time = kwargs['time']
             if 'priority' in kwargs:
                 priority = kwargs['priority']
+            if 'name' in kwargs:
+                name = kwargs['name']
             
             e = Process(args[0], args, time, priority)
             self._processes.append(e)
+            
+            if name != None:
+                self._available[name] = e
+                self._out.append(name)
+            
             return e
         
         # else assume decorator with params
@@ -223,6 +290,7 @@ class Model(ABC):
             args = ()
             time = None
             priority = 0
+            name = None
             
             if 'args' in kwargs:
                 args = kwargs['args']
@@ -230,38 +298,46 @@ class Model(ABC):
                 time = kwargs['time']
             if 'priority' in kwargs:
                 priority = kwargs['priority']
+            if 'name' in kwargs:
+                name = kwargs['name']
                 
             def inner(routine):
                 e = Process(routine, args, time, priority)
                 self._processes.append(e)
+                
+                if name != None:
+                    self._available[name] = e
+                    self._out.append(name)
+                    
+                
                 return e
                 
             return inner
         
 
 
-    def _register(self):
-        # Get all attributes that are an instance of BuildingBlock and
-        # organize them into lists
+    # def _register(self):
+        # # Get all attributes that are an instance of BuildingBlock and
+        # # organize them into lists
 
-        elements = [x for x in self.__dict__.values()
-                    if isinstance(x, (BuildingBlock, Model))]
+        # elements = [x for x in self.__dict__.values()
+                    # if isinstance(x, (BuildingBlock, Model))]
 
-        for e in elements:
-            if isinstance(e, Sample):
-                self._samples.append(e)
-            #elif isinstance(e, Parameter):
-            #    self._parameters.append(e)
-            #elif isinstance(e, Equation):
-            #    self._equations.append(e)
-            #elif isinstance(e, Flow):
-            #    self._flows.append(e)
-            #elif isinstance(e, Pool):
-            #    self._pools.append(e)
-            #elif isinstance(e, Model):
-            #    self._models.append(e)
-                #all sub-models share the root event queue
-            #    e._event_queue = self._event_queue
+        # for e in elements:
+            # if isinstance(e, Sample):
+                # self._samples.append(e)
+            # #elif isinstance(e, Parameter):
+            # #    self._parameters.append(e)
+            # #elif isinstance(e, Equation):
+            # #    self._equations.append(e)
+            # #elif isinstance(e, Flow):
+            # #    self._flows.append(e)
+            # #elif isinstance(e, Pool):
+            # #    self._pools.append(e)
+            # #elif isinstance(e, Model):
+            # #    self._models.append(e)
+                # #all sub-models share the root event queue
+            # #    e._event_queue = self._event_queue
 
 
 
@@ -558,15 +634,15 @@ class Model(ABC):
         for e in self._parameters:
             e.reset()
 
-    def _reset_samples(self):
+    # def _reset_samples(self):
 
-        # Recurse through sub-models
-        for m in self._models:
-            m._reset_samples()
+        # # Recurse through sub-models
+        # for m in self._models:
+            # m._reset_samples()
 
-        # Reset samples
-        for e in self._samples:
-            e.reset()
+        # # Reset samples
+        # for e in self._samples:
+            # e.reset()
 
     def _reset_equations(self):
 
@@ -626,7 +702,7 @@ class Model(ABC):
         # Reset all elements
         self._reset_pools()
         self._reset_parameters()
-        self._reset_samples()
+        # self._reset_samples()
         self._reset_equations()
         self._reset_flows()
         self._reset_processes()
@@ -646,6 +722,15 @@ class Model(ABC):
                 self._output[key] = e._save_output()
 
         return self._output
+
+
+    def start_process(self, event, delay=0):
+        if delay > 0:
+            event.time = self._t + delay
+            heapq.heappush(self._event_queue, event)
+        else:
+            event.run(self._t(), self._event_queue)
+        
 
     # Do a run
     def _run(self, end=None, dt=None, tunit=None, start_time=None,

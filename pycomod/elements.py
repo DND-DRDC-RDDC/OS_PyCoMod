@@ -26,6 +26,7 @@ class BuildingBlock:
         self.init_value = value
         self.value = value
         self.value_hist = [value]  # History of values
+        
 
     def reset(self, value=None):
 
@@ -332,17 +333,17 @@ class Parameter(BuildingBlock):
         self.push_value(value)
 
 
-# Class representing a constant that is randomly sampled from a distribution at
-# the start of the simulation
-class Sample(BuildingBlock):
+# # Class representing a constant that is randomly sampled from a distribution at
+# # the start of the simulation
+# class Sample(BuildingBlock):
 
-    # Constructor
-    def __init__(self, sample_func=lambda: 1):
-        super().__init__(sample_func())
-        self.sample_func = sample_func
+    # # Constructor
+    # def __init__(self, sample_func=lambda: 1):
+        # super().__init__(sample_func())
+        # self.sample_func = sample_func
 
-    def reset(self):
-        super().reset(self.sample_func())
+    # def reset(self):
+        # super().reset(self.sample_func())
 
 
 # Class representing an intermediate equation, e.g. N = S+E+I+R, that can be
@@ -350,24 +351,21 @@ class Sample(BuildingBlock):
 class Equation(BuildingBlock):
 
     # Constructor
-    def __init__(self, eq_func=lambda: 1, value=None):
-        if value is not None:
-            super().__init__(value)
-        else:
-            v = eq_func()
-            if isinstance(v, BuildingBlock):
-                v = v()
-            super().__init__(v)
+    def __init__(self, eq_func=lambda: 1):
+        v = eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
+        super().__init__(v)
         
         self.eq_func = eq_func
 
     def reset(self):
         
-        #v = self.eq_func()
-        #if isinstance(v, BuildingBlock):
-        #    v = v()
+        v = self.eq_func()
+        if isinstance(v, BuildingBlock):
+            v = v()
             
-        super().reset()
+        super().reset(v)
 
     def update(self, t, dt):
         
@@ -452,7 +450,6 @@ class Event:
         self.args = args
         self.priority = priority
         self.origin = origin
-        self.send = None
         
         
         
@@ -571,6 +568,7 @@ class Process:
         self.args = args
         self.time = time
         self.priority = priority
+        
         
     # put the event on the queue if a time is specified
     def reset(self, event_queue):
