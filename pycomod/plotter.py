@@ -43,43 +43,85 @@ class Plotter:
         if ylimit is not None:
             self.ax.set_ylim(*ylimit)
 
-    def plot(self, run, elements, **kwargs):
+
+    # def plot(self, run, elements, **kwargs):
+        # # First setup plot if not done already
+        # if self.fig is None:
+            # self.setup()
+
+        # # x = run['x_dates']
+
+        # # # Init timeseries data for plotting
+        # # d = np.zeros(len(x))
+
+        # # # Parse elements: remove whitespace and split on +
+        # # elements = elements.replace(' ', '').split('+')
+
+        # # # For each supplied element
+        # # for s in elements:
+
+            # # # Split breadcrumbs
+            # # s = s.split('.')
+
+            # # # Get the data
+            # # data = run['output']
+            # # for e in s:
+                # # data = data[e]
+
+            # # # If data is 2d (meaning it includes cohorts), sum across cohorts
+            # # if data.ndim == 2:
+                # # data = data.sum(axis=1)
+
+            # # # Append to data
+            # #d = d + data
+            
+            
+        # data = run['output'][elements]
+        # d = data['values']
+        # x = data['times']
+        
+
+        # try:
+            # color = kwargs['color']
+        # except KeyError:
+            # color = 'steelblue'
+
+        # try:
+            # label = kwargs['label']
+        # except KeyError:
+            # label = '.'.join(args)
+
+        # try:
+            # cumsum = kwargs['cumsum']
+        # except KeyError:
+            # cumsum = False
+            
+        # try:
+            # step = kwargs['step']
+        # except KeyError:
+            # step = False
+
+        # # If cumulative
+        # if cumsum:
+            # d = np.cumsum(d)
+
+        # if step:
+            # self.ax.step(x, d, color=color, label=label, where='post')
+        # else:
+            # self.ax.plot(x, d, color=color, label=label)
+        
+
+        # self.ax.legend()
+
+
+    def plot(self, element, **kwargs):
         # First setup plot if not done already
         if self.fig is None:
             self.setup()
 
-        # x = run['x_dates']
-
-        # # Init timeseries data for plotting
-        # d = np.zeros(len(x))
-
-        # # Parse elements: remove whitespace and split on +
-        # elements = elements.replace(' ', '').split('+')
-
-        # # For each supplied element
-        # for s in elements:
-
-            # # Split breadcrumbs
-            # s = s.split('.')
-
-            # # Get the data
-            # data = run['output']
-            # for e in s:
-                # data = data[e]
-
-            # # If data is 2d (meaning it includes cohorts), sum across cohorts
-            # if data.ndim == 2:
-                # data = data.sum(axis=1)
-
-            # # Append to data
-            #d = d + data
-            
-            
-        data = run['output'][elements]
-        d = data['values']
-        x = data['times']
+        d = element['values']
+        x = element['times']
         
-
         try:
             color = kwargs['color']
         except KeyError:
@@ -99,15 +141,27 @@ class Plotter:
             step = kwargs['step']
         except KeyError:
             step = False
+            
+        try:
+            alpha = kwargs['alpha']
+        except KeyError:
+            alpha = 1
+            
+        try:
+            linestyle = kwargs['linestyle']
+        except KeyError:
+            linestyle = '-'
+            
+            
 
         # If cumulative
         if cumsum:
             d = np.cumsum(d)
 
         if step:
-            self.ax.step(x, d, color=color, label=label, where='post')
+            self.ax.step(x, d, color=color, label=label, alpha=alpha, linestyle=linestyle, where='post')
         else:
-            self.ax.plot(x, d, color=color, label=label)
+            self.ax.plot(x, d, color=color, label=label, alpha=alpha, linestyle=linestyle)
         
 
         self.ax.legend()

@@ -49,7 +49,10 @@ class Model(ABC):
         self._event_queue = []
 
         # Setup
-        self.build(*args, **kwargs)
+        a = self.build(*args, **kwargs)
+        
+        if a != None:
+            self.set_available(a)
 
 
     # Read-only properties
@@ -91,15 +94,25 @@ class Model(ABC):
         
     def set_available(self, names, output=None ):
         
+        # if output is None, default is to include all elements in output
+        if output == None:
+            self._out = []
+        
         # self is not needed in the dict
-        del names['self']
+        if 'self' in names:
+            del names['self']
         
         for key, value in names.items():
             if isinstance(value, BuildingBlock) or isinstance(value, Model) or isinstance(value, Process):
                 value.name = key
+                
+                if output == None:
+                    self._out.append(key)
         
         self._available = names
-        self._out = [o.name for o in output]
+        
+        if output != None:
+            self._out = [o.name for o in output]
         
         
     def __getattr__(self, name):
@@ -368,44 +381,72 @@ class Model(ABC):
         self._init_cond(init['model'])
 
     # Get the initial condition dict for this model
-    def _get_model_init(self):
+    def get_init(self, d=None, key=None):
 
-        self._reset()
-
-        d = {}
-        elements = [(k, v) for k, v in self.__dict__.items()
+        if d is None:
+            d = {}
+            # create run dict
+            d['run'] = {}
+            d['run']['t'] = [self.t()]
+            d['run']['date'] = [self.date()]
+            d['run']['tunit'] = [self.tunit()]
+            d['run']['dt'] = [self.dt()]
+            d['run']['end'] = [self.end()]
+            d['run']['reps'] = [self.reps()]
+            
+        if key is None:
+            key = 'model'
+            
+        # Create model dict
+        d[key] = {}
+        
+        elements = [(k, v) for k, v in self._available.items()
                     if isinstance(v, (Pool, Parameter, Model))]
 
         for k, v in elements:
             if isinstance(v, Model):
-                d[k] = v._get_model_init()
+                next_key = key + '.' + k
+                d[key][k] = [next_key]
+                v.get_init(d, next_key)
             else:
-                d[k] = v()
+                if type(v()) == np.ndarray:
+                    d[key][k] = v()
+                else:
+                    d[key][k] = [v()]
+
+        # Add output tracking
+        if self.out is None:
+            d[key]['out'] = [None]
+        else:
+            d[key]['out'] = self.out
 
         return d
 
-    # Get the run init settings
-    def _get_run_init(self):
-        d = {}
 
-        # Add run settings
-        d = {}
-        d['t'] = self.t()
-        d['date'] = self.date()
-        d['tunit'] = self.tunit()
-        d['dt'] = self.dt()
-        d['end'] = self.end()
-        d['reps'] = self.reps()
+    # # Get the run init settings
+    # def _get_run_init(self):
+        # # Add run settings
+        
+        # d = {}
+        # d['t'] = self.t()
+        # d['date'] = self.date()
+        # d['tunit'] = self.tunit()
+        # d['dt'] = self.dt()
+        # d['end'] = self.end()
+        # d['reps'] = self.reps()
 
-        return d
+        # return d
 
-    def get_init(self):
-        d = {}
+    # def get_init(self):
+        
+        # self._reset()
+        
+        # d = {}
 
-        d['run'] = self._get_run_init()
-        d['model'] = self._get_model_init()
+        # d['run'] = self._get_run_init()
+        # d['model'] = self._get_model_init()
 
-        return d
+        # return d
 
     # Get dataframes representing initial conditions for the model
     def _get_init_df(self, d=None, key=None):
