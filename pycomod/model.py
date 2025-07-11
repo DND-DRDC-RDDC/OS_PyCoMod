@@ -406,7 +406,7 @@ class Model(ABC):
         for k, v in elements:
             if isinstance(v, Model):
                 next_key = key + '.' + k
-                d[key][k] = [next_key]
+                d[key][k] = ['<' + next_key + '>']
                 v.get_init(d, next_key)
             else:
                 if type(v()) == np.ndarray:
@@ -421,6 +421,51 @@ class Model(ABC):
             d[key]['out'] = self.out
 
         return d
+
+
+    def write_excel_init(self, file=None):
+
+        if file is None:
+            file = 'init2.xlsx'
+
+        d = self.get_init()
+
+        with pd.ExcelWriter(file) as writer:
+            for k, v in d.items():
+                
+                # Get max num rows
+                rows = max([len(x) for x in v.values()])
+
+                # Normalize column lengths
+                for j in v.keys():
+                    add = rows - len(v[j])
+                    if add > 0:
+                        v[j] = np.append(v[j], [None]*add)
+                
+                df = pd.DataFrame.from_dict(v)
+                df.to_excel(writer, sheet_name=k, index=False)
+
+
+    def read_excel_init(self, file, sheet=None):
+        # If file is a string (first call), read the file
+        if type(file) is str:
+            file = pd.read_excel(file, None)
+            
+        d = {}
+        
+        # for each sheet df
+        for k, df in file.items():
+            
+            d[k] = {}
+            
+            # for each column
+            for n in df.columns:
+            
+                c = [x for x in df[n] if not pd.isna(x)]
+          
+                d[k][n] = c
+
+        return d  
 
 
     # # Get the run init settings
@@ -509,16 +554,16 @@ class Model(ABC):
 
         return d
 
-    # Write an excel file containing initial conditions for the model
-    def write_excel_init(self, filename=None):
-        d = self._get_init_df()
+    # # Write an excel file containing initial conditions for the model
+    # def write_excel_init(self, filename=None):
+        # d = self._get_init_df()
 
-        if filename is None:
-            filename = 'init.xlsx'
+        # if filename is None:
+            # filename = 'init.xlsx'
 
-        with pd.ExcelWriter(filename) as writer:
-            for k, v in d.items():
-                v.to_excel(writer, sheet_name=k, index=False)
+        # with pd.ExcelWriter(filename) as writer:
+            # for k, v in d.items():
+                # v.to_excel(writer, sheet_name=k, index=False)
 
     # Set initial condition and push to submodels
     def _push_init(self, key, value):
