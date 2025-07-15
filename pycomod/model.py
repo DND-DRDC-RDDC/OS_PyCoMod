@@ -375,10 +375,27 @@ class Model(ABC):
                 else:
                     e.init_cond(value)
 
-    # Set the run and model initial conditions from a dictionary
+    # # Set the run and model initial conditions from a dictionary
+    # def set_init(self, init):
+        # self._init_cond(init['run'])
+        # self._init_cond(init['model'])
+
+
+
+
     def set_init(self, init):
-        self._init_cond(init['run'])
-        self._init_cond(init['model'])
+        
+        #init run variables
+        self.t.init_cond(init['run']['t'][0])
+        self.date.init_cond(np.datetime64(init['run']['date'][0]))
+        self.tunit.init_cond(np.timedelta64(1,init['run']['tunit'][0]))
+        self.dt.init_cond(init['run']['dt'][0])
+        self.end.init_cond(init['run']['end'][0])
+        self.reps.init_cond(init['run']['reps'][0])
+        
+        
+        
+
 
     # Get the initial condition dict for this model
     def get_init(self, d=None, key=None):
@@ -388,8 +405,8 @@ class Model(ABC):
             # create run dict
             d['run'] = {}
             d['run']['t'] = [self.t()]
-            d['run']['date'] = [self.date()]
-            d['run']['tunit'] = [self.tunit()]
+            d['run']['date'] = [str(self.date())]
+            d['run']['tunit'] = [np.datetime_data(self.tunit())[0]]
             d['run']['dt'] = [self.dt()]
             d['run']['end'] = [self.end()]
             d['run']['reps'] = [self.reps()]
