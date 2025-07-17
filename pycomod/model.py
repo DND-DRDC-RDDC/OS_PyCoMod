@@ -383,18 +383,36 @@ class Model(ABC):
 
 
 
-    def set_init(self, init):
+    def set_init(self, init, key=None):
         
-        #init run variables
-        self.t.init_cond(init['run']['t'][0])
-        self.date.init_cond(np.datetime64(init['run']['date'][0]))
-        self.tunit.init_cond(np.timedelta64(1,init['run']['tunit'][0]))
-        self.dt.init_cond(init['run']['dt'][0])
-        self.end.init_cond(init['run']['end'][0])
-        self.reps.init_cond(init['run']['reps'][0])
+        if key is None:
         
+            #init run variables
+            self.t.init_cond(init['run']['t'][0])
+            self.date.init_cond(np.datetime64(init['run']['date'][0]))
+            self.tunit.init_cond(np.timedelta64(1,init['run']['tunit'][0]))
+            self.dt.init_cond(init['run']['dt'][0])
+            self.end.init_cond(init['run']['end'][0])
+            self.reps.init_cond(init['run']['reps'][0])
         
-        
+            key = 'model'
+
+        for k, v in init[key].items():
+            # if it's a sub-model reference, init the sub-model
+            if len(v) == 1 and type(v[0]) == str and v[0][0] == '<':
+                sub_key = v[0][1:-1] # strip the <> from the key name
+                getattr(self, k).set_init(init, sub_key)
+                
+            # if it's the output list    
+            elif k == 'out':
+                self._out = v  
+                
+            # else it's a regular init value (or array)
+            else:
+                if len(v) == 1:
+                    v = v[0]
+                    
+                getattr(self, k).init_cond(v)
 
 
     # Get the initial condition dict for this model
@@ -443,7 +461,7 @@ class Model(ABC):
     def write_excel_init(self, file=None):
 
         if file is None:
-            file = 'init2.xlsx'
+            file = 'init.xlsx'
 
         d = self.get_init()
 
@@ -482,7 +500,7 @@ class Model(ABC):
           
                 d[k][n] = c
 
-        return d  
+        self.set_init(d)  
 
 
     # # Get the run init settings
@@ -869,23 +887,35 @@ class Model(ABC):
 
         # First apply initial conditions from init dict
         if init is not None:
-            self.set_init(init)
+            # if init is a string, assume it's an excel init file
+            if type(init) == str:
+                self.read_excel_init(init)
+            # else assume it's an init dict
+            else:
+                self.set_init(init)
 
         # Override for any of the following run parameters
         if end is not None:
-            self._push_init('end', end)
+            #self._push_init('end', end)
+            self.end.init_cond(end)
 
         if dt is not None:
-            self._push_init('dt', dt)
+            #self._push_init('dt', dt)
+            self.dt.init_cond(dt)
 
         if tunit is not None:
-            self._push_init('tunit', tunit)
+            #self._push_init('tunit', tunit)
+            #self.tunit.init_cond()
+            
+            self.tunit.init_cond(np.timedelta64(1, tunit))
 
         if start_time is not None:
-            self._push_init('t', start_time)
+            #self._push_init('t', start_time)
+            self.t.init_cond(start_time)
 
         if start_date is not None:
-            self._push_init('date', start_date)
+            #self._push_init('date', start_date)
+            self.date.init_cond(np.datetime64(start_date))
 
         # Number of sim steps
         n = int(self.end()/self.dt())
