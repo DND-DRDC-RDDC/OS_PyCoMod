@@ -3,56 +3,56 @@ import datetime
 import pandas as pd
 
 
-# Function to read init from excel file
-def read_excel_init(file, sheet=None):
-    # If file is a string (first call), read the file
-    if type(file) is str:
-        file = pd.read_excel(file, None)
+# # Function to read init from excel file
+# def read_excel_init(file, sheet=None):
+    # # If file is a string (first call), read the file
+    # if type(file) is str:
+        # file = pd.read_excel(file, None)
 
-    # If sheet is None (first call), get the first sheet, else get the
-    # specified sheet
-    if sheet is None:
-        df_run = file['run']
-        df = file['model']
-    else:
-        df_run = None
-        df = file[sheet]
+    # # If sheet is None (first call), get the first sheet, else get the
+    # # specified sheet
+    # if sheet is None:
+        # df_run = file['run']
+        # df = file['model']
+    # else:
+        # df_run = None
+        # df = file[sheet]
 
-    init = {}
-    init_return = init
+    # init = {}
+    # init_return = init
 
-    # if first pass, get run params
-    if df_run is not None:
-        init['run'] = {}
-        for c in df_run.columns:
-            # Get raw column as list, removing nans
-            init['run'][c] = df_run[c][0]
+    # # if first pass, get run params
+    # if df_run is not None:
+        # init['run'] = {}
+        # for c in df_run.columns:
+            # # Get raw column as list, removing nans
+            # init['run'][c] = df_run[c][0]
 
-        init['model'] = {}
-        init = init['model']
+        # init['model'] = {}
+        # init = init['model']
 
-    # get model params
-    for c in df.columns:
-        # Get raw column as list, removing nans
-        v = [x for x in df[c] if not pd.isna(x)]
+    # # get model params
+    # for c in df.columns:
+        # # Get raw column as list, removing nans
+        # v = [x for x in df[c] if not pd.isna(x)]
 
-        # If it's the output tracking list
-        if c == 'out':
-            init[c] = v
+        # # If it's the output tracking list
+        # if c == 'out':
+            # init[c] = v
 
-        # If a single value
-        elif len(v) == 1:
-            # Try loading a sheet with that name
-            try:
-                init[c] = read_excel_init(file, v[0])
-            except KeyError:
-                init[c] = v[0]
+        # # If a single value
+        # elif len(v) == 1:
+            # # Try loading a sheet with that name
+            # try:
+                # init[c] = read_excel_init(file, v[0])
+            # except KeyError:
+                # init[c] = v[0]
 
-        # If a column of values, save the list
-        else:
-            init[c] = v
+        # # If a column of values, save the list
+        # else:
+            # init[c] = v
 
-    return init_return
+    # return init_return
 
 
 # Class for running models and saving results
@@ -73,7 +73,7 @@ class RunManager:
 
         # If init is a string, assume it is an excel file and try to read it
         if type(init) == str:
-            init = read_excel_init(init)
+            init = model.read_excel_init(init)
 
         # Run info
         model_type = str(type(model)).split('.')[1][:-2]

@@ -500,7 +500,8 @@ class Model(ABC):
           
                 d[k][n] = c
 
-        self.set_init(d)  
+        #self.set_init(d)
+        return d
 
 
     # # Get the run init settings
@@ -889,7 +890,8 @@ class Model(ABC):
         if init is not None:
             # if init is a string, assume it's an excel init file
             if type(init) == str:
-                self.read_excel_init(init)
+                init = self.read_excel_init(init)
+                self.set_init(init)
             # else assume it's an init dict
             else:
                 self.set_init(init)
