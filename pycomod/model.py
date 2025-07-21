@@ -898,25 +898,18 @@ class Model(ABC):
 
         # Override for any of the following run parameters
         if end is not None:
-            #self._push_init('end', end)
             self.end.init_cond(end)
 
         if dt is not None:
-            #self._push_init('dt', dt)
             self.dt.init_cond(dt)
 
         if tunit is not None:
-            #self._push_init('tunit', tunit)
-            #self.tunit.init_cond()
-            
             self.tunit.init_cond(np.timedelta64(1, tunit))
 
         if start_time is not None:
-            #self._push_init('t', start_time)
             self.t.init_cond(start_time)
 
         if start_date is not None:
-            #self._push_init('date', start_date)
             self.date.init_cond(np.datetime64(start_date))
 
         # Number of sim steps
@@ -937,12 +930,40 @@ class Model(ABC):
         # Save output
         self._save_output()
 
+
+
+    # Get the time series of values for this element as a numpy array (using time steps)
+    def get_time_series(self, value_hist, time_hist):
+        v = value_hist[0]
+        
+        t = time_hist[0]
+        
+        ts = [v]
+        
+        i = 1
+        
+        while t <= self.end():
+            
+            t += self.dt()
+            
+            if i >= len(time_hist) or t < time_hist[i]:
+                ts.append(v)
+            else:
+                v = value_hist[i]
+                i += 1
+                ts.append(v)
+    
+        return ts 
+            
+
+
     # Create container for mc output based on output from first replication
     def _init_output_mc(self, output):
         output_mc = {}
         for k, v in output.items():
-            if not isinstance(v, dict):
-                output_mc[k] = np.array([v])
+            #if not isinstance(v, dict):
+            if 'values' in v and 'times' in v:
+                output_mc[k] = np.array([self.get_time_series(v['values'], v['times'])])
             else:
                 output_mc[k] = self._init_output_mc(v)
 
@@ -951,8 +972,9 @@ class Model(ABC):
     # Append output from subsequent replications to the mc output
     def _append_output_mc(self, output_mc, output):
         for k, v in output.items():
-            if not isinstance(v, dict):
-                output_mc[k] = np.append(output_mc[k], np.array([v]), axis=0)
+            #if not isinstance(v, dict):
+            if 'values' in v and 'times' in v:
+                output_mc[k] = np.append(output_mc[k], np.array([self.get_time_series(v['values'], v['times'])]), axis=0)
             else:
                 self._append_output_mc(output_mc[k], v)
 
@@ -968,26 +990,35 @@ class Model(ABC):
                 start_time=None, start_date=None, init=None):
         # First apply initial conditions from init dict
         if init is not None:
-            self.set_init(init)
+             # if init is a string, assume it's an excel init file
+            if type(init) == str:
+                init = self.read_excel_init(init)
+                self.set_init(init)
+            # else assume it's an init dict
+            else:
+                self.set_init(init)
 
         # Override for any of the following run parameters
         if reps is not None:
-            self._push_init('reps', reps)
+            self.reps.init_cond(reps)
 
+        # Override for any of the following run parameters
         if end is not None:
-            self._push_init('end', end)
+            self.end.init_cond(end)
 
         if dt is not None:
-            self._push_init('dt', dt)
+            self.dt.init_cond(dt)
 
         if tunit is not None:
-            self._push_init('tunit', tunit)
+            self.tunit.init_cond(np.timedelta64(1, tunit))
 
         if start_time is not None:
-            self._push_init('t', start_time)
+            self.t.init_cond(start_time)
 
         if start_date is not None:
-            self._push_init('date', start_date)
+            self.date.init_cond(np.datetime64(start_date))
+
+
 
         # Reset mc output
         self._reset_output_mc()

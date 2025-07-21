@@ -77,11 +77,12 @@ class BuildingBlock:
             # raise Exception("Index must be negative to reference past value. "
                             # "Can't reference present or future value.")
 
-    # Get the time series data for this element as a numpy array
+    # Get the history of values for this element as a numpy array (true DES time)
     def get_hist(self):
         
         return {'values': np.array(self.value_hist), 'times': np.array(self.time_hist)}
-        
+    
+
 
 
 
