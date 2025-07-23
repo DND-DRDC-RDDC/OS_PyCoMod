@@ -44,6 +44,8 @@ class Plotter:
             self.ax.set_ylim(*ylimit)
             
         self.xdates = xdates
+        
+
 
 
 
@@ -92,9 +94,13 @@ class Plotter:
             
             
         # if plotting an element from a regular run
-        if isinstance(element, dict):
+        if 'values' in element:
             d = element['values']
-            x = element['times']
+            
+            if self.xdates:
+                x = element['dates']
+            else:
+                x = element['times']
             
             # If cumulative
             if cumsum:
@@ -108,9 +114,13 @@ class Plotter:
         
         # else plotting an element from a MC run
         else:
-            d = element     
-            x = [i for i in range(len(d[0]))]
+            d = element['mc_values']     
             
+            if self.xdates:
+                x = element['mc_dates']
+            else:
+                x = element['mc_times']      
+                
             # If cum sum, cumulative sum along time axis
             if cumsum:
                 d = np.cumsum(d, axis=1)
@@ -128,3 +138,7 @@ class Plotter:
 
         self.ax.legend()
 
+        # if self.xdates:
+
+            # self.ax.set_xticks([0, 100, 200])
+            # self.ax.set_xticklabels(['yo', 'mo', 'do'])

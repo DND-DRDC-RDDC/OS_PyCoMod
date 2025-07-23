@@ -92,6 +92,8 @@ class RunManager:
         run_data['model'] = model_type
         run_data['init_hash'] = init_hash
         run_data['timestamp'] = timestamp
+        
+        
 
         # Get reps from param or from init
         if reps is None:
@@ -112,8 +114,15 @@ class RunManager:
             run_data['output_mc'] = model._output_mc
 
         run_data['reps'] = reps
-        run_data['x_times'] = model.t.value_hist
-        run_data['x_dates'] = model.date.value_hist
+        #run_data['x_times'] = model.t.value_hist
+        #run_data['x_dates'] = model.date.value_hist
+        run_data['t_start'] = model.t.init_value
+        run_data['t_end'] = model.end()
+        run_data['dt'] = model.dt()
+        run_data['tunit'] = model.tunit()
+        run_data['date_start'] = model.date()
+        run_data['date_end'] = model.date() + (model.end() - model.t.init_value) * model.tunit()
+        
 
         self.runs[label] = run_data
 

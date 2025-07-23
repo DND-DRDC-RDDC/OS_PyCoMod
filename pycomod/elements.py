@@ -42,7 +42,7 @@ class BuildingBlock:
 
         self.value = self.init_value
         self.value_hist = [self.init_value]
-        self.time_hist = [0]
+        self.time_hist = [self.parent.t.init_value]
 
 
     def update_value(self, value):
@@ -80,7 +80,12 @@ class BuildingBlock:
     # Get the history of values for this element as a numpy array (true DES time)
     def get_hist(self):
         
-        return {'values': np.array(self.value_hist), 'times': np.array(self.time_hist)}
+        h = {}
+        h['values'] = np.array(self.value_hist)
+        h['times'] = np.array(self.time_hist)
+        h['dates'] = np.array([self.parent.date() + t * self.parent.tunit() for t in h['times']])
+        
+        return h
     
 
 
@@ -198,14 +203,14 @@ class SimTime(BuildingBlock):
 # Sim time dates
 class SimDate(BuildingBlock):
 
-    def __init__(self, start_date=None):
+    def __init__(self, start_date=None, parent=None):
 
         if start_date is None:
             start_date = np.datetime64('today')
         else:
             start_date = np.datetime64(start_date)
 
-        super().__init__(start_date)
+        super().__init__(start_date, parent)
 
     def reset(self):
         super().reset()
@@ -221,8 +226,8 @@ class SimDate(BuildingBlock):
 class RunInfo(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1):
-        super().__init__(value)
+    def __init__(self, value=1, parent=None):
+        super().__init__(value, parent)
 
     def reset(self):
         super().reset()

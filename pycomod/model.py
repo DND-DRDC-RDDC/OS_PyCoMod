@@ -17,14 +17,14 @@ class Model(ABC):
     def __init__(self, *args, **kwargs):
 
         # Time info
-        self._t = SimTime(0, self)
-        self._date = SimDate()
-        self._tunit = RunInfo(np.timedelta64(1, 'D'))
+        self._t = SimTime(0, parent=self)
+        self._date = SimDate(parent=self)
+        self._tunit = RunInfo(np.timedelta64(1, 'D'), parent=self)
 
         # Run info
-        self._dt = RunInfo(1)
-        self._end = RunInfo(365)
-        self._reps = RunInfo(100)
+        self._dt = RunInfo(1, parent=self)
+        self._end = RunInfo(365, parent=self)
+        self._reps = RunInfo(100, parent=self)
 
         # Model elements
         self._parameters = []
@@ -958,6 +958,23 @@ class Model(ABC):
         return ts 
             
 
+    def get_mc_xtimes(self):
+        t = self.t.init_value
+        
+        xtimes = [t]
+        
+        while t <= self.end():
+            t += self.dt()
+            
+            xtimes.append(t)
+            
+        return xtimes
+        
+    def get_mc_xdates(self):
+        
+        xtimes = self.get_mc_xtimes()
+        
+        return [self.date() + t * self.tunit() for t in xtimes]
 
     # Create container for mc output based on output from first replication
     def _init_output_mc(self, output):
@@ -965,7 +982,12 @@ class Model(ABC):
         for k, v in output.items():
             #if not isinstance(v, dict):
             if 'values' in v and 'times' in v:
-                output_mc[k] = np.array([self.get_time_series(v['values'], v['times'])])
+                output_mc[k] = {}
+                output_mc[k]['mc_values'] = np.array([self.get_time_series(v['values'], v['times'])])
+                output_mc[k]['mc_times'] = self.get_mc_xtimes()
+                output_mc[k]['mc_dates'] = self.get_mc_xdates()
+                
+                
             else:
                 output_mc[k] = self._init_output_mc(v)
 
@@ -976,7 +998,7 @@ class Model(ABC):
         for k, v in output.items():
             #if not isinstance(v, dict):
             if 'values' in v and 'times' in v:
-                output_mc[k] = np.append(output_mc[k], np.array([self.get_time_series(v['values'], v['times'])]), axis=0)
+                output_mc[k]['mc_values'] = np.append(output_mc[k]['mc_values'], np.array([self.get_time_series(v['values'], v['times'])]), axis=0)
             else:
                 self._append_output_mc(output_mc[k], v)
 
