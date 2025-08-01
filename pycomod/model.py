@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Equation, Step, Impulse, Process, Delay)
+                              Pool, Flow, Parameter, Equation, Step, Impulse, Process, Delay, Time, Date, Condition)
 
 
 
@@ -276,21 +276,21 @@ class Model(ABC):
         # non-decorator call with process function and optional parameters
         elif len(args)==1 and len(kwargs)>0 and callable(args[0]):
             
-            args = ()
-            time = None
+            proc_args = () # this must be an error, conflicts with *args above!!!!!!
+            start = None
             priority = 0
             name = None
             
             if 'args' in kwargs:
-                args = kwargs['args']
-            if 'time' in kwargs:
-                time = kwargs['time']
+                proc_args = kwargs['args']
+            if 'start' in kwargs:
+                start = kwargs['start']
             if 'priority' in kwargs:
                 priority = kwargs['priority']
             if 'name' in kwargs:
                 name = kwargs['name']
             
-            e = Process(args[0], args, time, priority, parent=self)
+            e = Process(args[0], proc_args, start, priority, parent=self)
             self._processes.append(e)
             
             if name != None:
@@ -301,22 +301,22 @@ class Model(ABC):
         
         # else assume decorator with params
         else:
-            args = ()
-            time = None
+            proc_args = ()
+            start = None
             priority = 0
             name = None
             
             if 'args' in kwargs:
-                args = kwargs['args']
-            if 'time' in kwargs:
-                time = kwargs['time']
+                proc_args = kwargs['args']
+            if 'start' in kwargs:
+                start = kwargs['start']
             if 'priority' in kwargs:
                 priority = kwargs['priority']
             if 'name' in kwargs:
                 name = kwargs['name']
                 
             def inner(routine):
-                e = Process(routine, args, time, priority, parent=self)
+                e = Process(routine, proc_args, start, priority, parent=self)
                 self._processes.append(e)
                 
                 if name != None:

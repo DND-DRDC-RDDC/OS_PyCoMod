@@ -497,8 +497,24 @@ class Impulse(Equation):
 
 
 class Delay:
-    def __init__(self, delay=0):
+    def __init__(self, delay):
         self.delay = delay
+
+class Time:
+    def __init__(self, time):
+        self.time = time
+        
+class Date:
+    def __init__(self, date):
+        self.date = np.datetime64(date)
+        
+class Condition:
+    def __init__(self, cond):
+        self.cond = cond
+        
+    def check(self):
+        return True == self.cond()
+
 
 
 # individual event on the sim event queue, the routine could be a function or a generator
@@ -513,24 +529,6 @@ class Event:
         self.parent = parent
         
         
-        
-    
-    # def resume(self, origin, value, sim_time, event_queue):
-        # try:
-            # y = origin.routine.send(value)
-            
-            # if isinstance(y, Delay):
-                # origin.time = sim_time + y.delay
-                # heapq.heappush(event_queue, origin)
-                
-            # elif isinstance(y, Event):
-                # y.origin = origin
-                # y.run(sim_time, event_queue)
-            
-            
-        # except StopIteration as e:
-            # if origin.origin != None:
-                # self.resume(origin.origin, e.value, sim_time, event_queue)
             
             
     def resume(self, origin, value):
@@ -551,25 +549,7 @@ class Event:
                 self.resume(origin.origin, e.value)
             
             
-    
-    # # run 
-    # def run_gen(self, sim_time, event_queue):
-        # try:
-            # y = next(self.routine)
-            
-            # if isinstance(y, Delay):
-                # self.time = sim_time + y.delay
-                # heapq.heappush(event_queue, self)
-                
-            # elif isinstance(y, Event):
-                # y.origin = self
-                # y.run(sim_time, event_queue)
-                
-            
-        # except StopIteration as e:
-            # if self.origin != None:
-                # self.resume(self.origin, e.value, sim_time, event_queue)
-            
+
         
     # run 
     def run_gen(self):
@@ -590,28 +570,7 @@ class Event:
                 self.resume(self.origin, e.value)
         
         
-    # # run when event pops off sim queue
-    # def run(self, sim_time, event_queue):
-        # # if it's a generator
-        # if isinstance(self.routine, GeneratorType):
-            # self.run_gen(sim_time, event_queue)
-                
-        # # else assume it is a function
-        # else:
-            
-            # #run the function
-            # x = self.routine(*self.args)
-            
-            # #if the function created a generator, run as a generator
-            # if isinstance(x, GeneratorType):
-                # self.routine = x
-                # self.run_gen(sim_time, event_queue)
-            
-            # # else it's a simple function
-            # else:
-                # if self.origin != None:
-                    # self.resume(self.origin, x, sim_time, event_queue)
-            
+
             
     # run when event pops off sim queue
     def run(self):
@@ -684,10 +643,10 @@ class Event:
 # Processes are the user created elements that generate events
 class Process:
     
-    def __init__(self, routine=lambda:1, args=(), time=None, priority=0, parent=None):
+    def __init__(self, routine=lambda:1, args=(), start=None, priority=0, parent=None):
         self.routine = routine
         self.args = args
-        self.time = time
+        self.start = start
         self.priority = priority
         
         self.parent = parent
@@ -695,9 +654,10 @@ class Process:
         
     # put the event on the queue if a time is specified
     def reset(self):
-        if self.time != None:
-            ev = Event(self.routine, args=self.args, time=self.time, priority=self.priority, parent=self.parent)
-            heapq.heappush(self.parent._event_queue, ev)
+        if self.start != None:
+            if isinstance(self.start, Time):
+                ev = Event(self.routine, args=self.args, time=self.start.time, priority=self.priority, parent=self.parent)
+                heapq.heappush(self.parent._event_queue, ev)
             
     # calling (used when another process yields to this process) returns an event for immediate execution
     def __call__(self, *args):
