@@ -529,24 +529,39 @@ class Event:
         self.parent = parent
         
         
+    
+    def yield_return(self, y):
+        
+        if y is None:
+            self.time = self.parent.t() + self.parent.dt()
+            heapq.heappush(self.parent._event_queue, self)
+        
+        elif isinstance(y, Time):
+            self.time = y.time
+            heapq.heappush(self.parent._event_queue, self)
             
+        elif isinstance(y, Delay):
+            self.time = self.parent.t() + y.delay
+            heapq.heappush(self.parent._event_queue, self)
             
-    def resume(self, origin, value):
+        elif isinstance(y, Date):
+            self.time = (y.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
+            heapq.heappush(self.parent._event_queue, self)  
+            
+        elif isinstance(y, Event):
+            y.origin = self
+            y.run()
+        
+    
+            
+    def resume(self, value):
         try:
-            y = origin.routine.send(value)
-            
-            if isinstance(y, Delay):
-                origin.time = self.parent.t() + y.delay
-                heapq.heappush(self.parent._event_queue, origin)
-                
-            elif isinstance(y, Event):
-                y.origin = origin
-                y.run()
-            
+            y = self.routine.send(value)
+            self.yield_return(y)
             
         except StopIteration as e:
-            if origin.origin != None:
-                self.resume(origin.origin, e.value)
+            if self.origin != None:
+                self.origin.resume(e.value)
             
             
 
@@ -555,19 +570,11 @@ class Event:
     def run_gen(self):
         try:
             y = next(self.routine)
-            
-            if isinstance(y, Delay):
-                self.time = self.parent.t() + y.delay
-                heapq.heappush(self.parent._event_queue, self)
-                
-            elif isinstance(y, Event):
-                y.origin = self
-                y.run()
-                
+            self.yield_return(y)
             
         except StopIteration as e:
             if self.origin != None:
-                self.resume(self.origin, e.value)
+                self.origin.resume(e.value)
         
         
 
@@ -592,8 +599,25 @@ class Event:
             # else it's a simple function
             else:
                 if self.origin != None:
-                    self.resume(self.origin, x)
-            
+                    self.origin.resume(x)
+          
+
+    def start(self, start=None):
+        if start != None:
+            if isinstance(start, Time):
+                self.time = start.time
+                heapq.heappush(self.parent._event_queue, self)
+                
+            elif isinstance(start, Delay):
+                self.time = self.parent.t() + start.delay
+                heapq.heappush(self.parent._event_queue, self)
+                
+            elif isinstance(start, Date):
+                self.time = (start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
+                heapq.heappush(self.parent._event_queue, self)
+        else:
+            self.run()
+          
             
     # comparators
     def __lt__(self, other):
@@ -656,8 +680,21 @@ class Process:
     def reset(self):
         if self.start != None:
             if isinstance(self.start, Time):
-                ev = Event(self.routine, args=self.args, time=self.start.time, priority=self.priority, parent=self.parent)
+                time = self.start.time
+                ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
                 heapq.heappush(self.parent._event_queue, ev)
+                
+            elif isinstance(self.start, Delay):
+                time = self.parent.t() + self.start.delay
+                ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
+                heapq.heappush(self.parent._event_queue, ev)
+                
+            elif isinstance(self.start, Date):
+                time = (self.start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
+                ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
+                heapq.heappush(self.parent._event_queue, ev)
+                
+            
             
     # calling (used when another process yields to this process) returns an event for immediate execution
     def __call__(self, *args):
