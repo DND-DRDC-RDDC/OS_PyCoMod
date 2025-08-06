@@ -495,6 +495,9 @@ class Impulse(Equation):
         self.update_value(self.eq_func(self.parent.t(), self.parent.dt()))
 
 
+class TimeStep:
+    def __init__(self, steps=1):
+        self.steps = steps
 
 class Delay:
     def __init__(self, delay):
@@ -508,12 +511,7 @@ class Date:
     def __init__(self, date):
         self.date = np.datetime64(date)
         
-class Condition:
-    def __init__(self, cond):
-        self.cond = cond
-        
-    def check(self):
-        return True == self.cond()
+
 
 
 
@@ -528,12 +526,14 @@ class Event:
         
         self.parent = parent
         
+        self.finished = False
+        
         
     
     def yield_return(self, y):
         
-        if y is None:
-            self.time = self.parent.t() + self.parent.dt()
+        if isinstance(y, TimeStep):
+            self.time = self.parent.t() + self.parent.dt()*y.steps
             heapq.heappush(self.parent._event_queue, self)
         
         elif isinstance(y, Time):
@@ -555,26 +555,30 @@ class Event:
     
             
     def resume(self, value):
-        try:
-            y = self.routine.send(value)
-            self.yield_return(y)
-            
-        except StopIteration as e:
-            if self.origin != None:
-                self.origin.resume(e.value)
+        if not self.finished:
+            try:
+                y = self.routine.send(value)
+                self.yield_return(y)
+                
+            except StopIteration as e:
+                self.finished = True
+                if self.origin != None:
+                    self.origin.resume(e.value)
             
             
 
         
     # run 
     def run_gen(self):
-        try:
-            y = next(self.routine)
-            self.yield_return(y)
-            
-        except StopIteration as e:
-            if self.origin != None:
-                self.origin.resume(e.value)
+        if not self.finished:
+            try:
+                y = next(self.routine)
+                self.yield_return(y)
+                
+            except StopIteration as e:
+                self.finished = True
+                if self.origin != None:
+                    self.origin.resume(e.value)
         
         
 
@@ -692,6 +696,19 @@ class Process:
             elif isinstance(self.start, Date):
                 time = (self.start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
+                heapq.heappush(self.parent._event_queue, ev)
+                
+            elif isinstance(self.start, Event):
+                
+                ev_sub = Event(self.routine, args=self.args, priority=self.priority, parent=self.parent)
+                
+                def routine():
+                    yield self.start
+                    x = yield ev_sub
+                    return x
+                
+                ev = Event(routine, time=self.parent.t.init_value, priority=self.priority, parent=self.parent)
+                
                 heapq.heappush(self.parent._event_queue, ev)
                 
             

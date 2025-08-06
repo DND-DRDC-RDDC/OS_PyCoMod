@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
-                              Pool, Flow, Parameter, Equation, Step, Impulse, Process, Delay, Time, Date, Condition)
+                              Pool, Flow, Parameter, Equation, Step, Impulse, Event, Process, Delay, Time, Date, TimeStep)
 
 
 
@@ -328,6 +328,117 @@ class Model(ABC):
                 
             return inner
         
+
+
+    # process wait types
+
+    def wait_step(self, steps = 1):
+        return Timestep(steps)
+
+    def wait_time(self, time):
+        
+        return Time(time)
+        
+    def wait_date(self, date):
+        
+        return Date(date)
+        
+    def wait_delay(self, delay):
+        
+        return Delay(delay)
+        
+    def wait_condition(self, condition):
+        
+        def cond_routine():
+            
+            while True:
+                yield TimeStep()
+                
+                if condition():
+                    break
+                    
+        return Event(cond_routine,  parent=self)
+
+
+
+    def get_start_event(self, start):
+        
+        def routine():
+            yield start
+            return str(start)
+            
+        return Event(routine,  parent=self)
+
+
+
+    def wait_any(self,*args):
+        
+        ev = Event(lambda: 0,  parent=self)
+        
+        def any_routine():
+            for a in args:
+                if isinstance(a, Event):
+                    a.origin = ev
+                    a.start(Delay(0))
+                else:
+                    a = self.get_start_event(a)
+                    a.origin = ev
+                    a.start(Delay(0))
+                    
+            x = yield
+            
+            return x
+            
+        ev.routine = any_routine
+        
+        return ev
+
+
+    def wait_all(self,*args):
+        
+        ev = Event(lambda: 0,  parent=self)
+        
+        def all_routine():
+            for a in args:
+                if isinstance(a, Event):
+                    a.origin = ev
+                    a.start(Delay(0))
+                else:
+                    a = self.get_start_event(a)
+                    a.origin = ev
+                    a.start(Delay(0))
+            
+            x = []
+            for a in args:
+                y = yield
+                x.append(y)
+            
+            return x
+            
+        ev.routine = all_routine
+        
+        return ev
+
+    def wait_sequence(self,*args):
+        
+        ev = Event(lambda: 0,  parent=self)
+        
+        def seq_routine():
+            
+            x = []
+            
+            for a in args:
+                if not isinstance(a, Event):
+                    a = self.get_start_event(a)
+                
+                y = yield a
+                x.append(y)
+            
+            return x
+            
+        ev.routine = seq_routine
+        
+        return ev
 
 
     # def _register(self):
