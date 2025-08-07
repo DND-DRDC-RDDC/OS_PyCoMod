@@ -437,7 +437,11 @@ class Equation(BuildingBlock):
 class Step(Equation):
 
     def __init__(self, values, times, default=0, parent=None):
-
+        
+        #add components to allow for better pcm-webtool support
+        self.values = values
+        self.times = times
+        
         # Define the step function
         def eq_func(t=0):
             
