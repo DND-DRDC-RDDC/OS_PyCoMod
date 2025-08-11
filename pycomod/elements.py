@@ -534,19 +534,23 @@ class Event:
         
         if isinstance(y, TimeStep):
             self.time = self.parent.t() + self.parent.dt()*y.steps
-            heapq.heappush(self.parent._event_queue, self)
+            #heapq.heappush(self.parent._event_queue, self)
+            self.parent._push_event(self)
         
         elif isinstance(y, Time):
             self.time = y.time
-            heapq.heappush(self.parent._event_queue, self)
+            #heapq.heappush(self.parent._event_queue, self)
+            self.parent._push_event(self)
             
         elif isinstance(y, Delay):
             self.time = self.parent.t() + y.delay
-            heapq.heappush(self.parent._event_queue, self)
+            #heapq.heappush(self.parent._event_queue, self)
+            self.parent._push_event(self)
             
         elif isinstance(y, Date):
             self.time = (y.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
-            heapq.heappush(self.parent._event_queue, self)  
+            #heapq.heappush(self.parent._event_queue, self)  
+            self.parent._push_event(self)
             
         elif isinstance(y, Event):
             y.origin = self
@@ -610,15 +614,18 @@ class Event:
         if start != None:
             if isinstance(start, Time):
                 self.time = start.time
-                heapq.heappush(self.parent._event_queue, self)
+                #heapq.heappush(self.parent._event_queue, self)
+                self.parent._push_event(self)
                 
             elif isinstance(start, Delay):
                 self.time = self.parent.t() + start.delay
-                heapq.heappush(self.parent._event_queue, self)
+                #heapq.heappush(self.parent._event_queue, self)
+                self.parent._push_event(self)
                 
             elif isinstance(start, Date):
                 self.time = (start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
-                heapq.heappush(self.parent._event_queue, self)
+                #heapq.heappush(self.parent._event_queue, self)
+                self.parent._push_event(self)
         else:
             self.run()
           
@@ -686,17 +693,20 @@ class Process:
             if isinstance(self.start, Time):
                 time = self.start.time
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                heapq.heappush(self.parent._event_queue, ev)
+                #heapq.heappush(self.parent._event_queue, ev)
+                self.parent._push_event(ev)
                 
             elif isinstance(self.start, Delay):
                 time = self.parent.t() + self.start.delay
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                heapq.heappush(self.parent._event_queue, ev)
+                #heapq.heappush(self.parent._event_queue, ev)
+                self.parent._push_event(ev)
                 
             elif isinstance(self.start, Date):
                 time = (self.start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                heapq.heappush(self.parent._event_queue, ev)
+                #heapq.heappush(self.parent._event_queue, ev)
+                self.parent._push_event(ev)
                 
             elif isinstance(self.start, Event):
                 
@@ -709,16 +719,17 @@ class Process:
                 
                 ev = Event(routine, time=self.parent.t.init_value, priority=self.priority, parent=self.parent)
                 
-                heapq.heappush(self.parent._event_queue, ev)
+                #heapq.heappush(self.parent._event_queue, ev)
+                self.parent._push_event(ev)
                 
             
             
     # calling (used when another process yields to this process) returns an event for immediate execution
     def __call__(self, *args):
-        return Event(self.routine, args=args, time=-1, priority=self.priority, parent=self.parent)
+        return Event(self.routine, args=args, time=self.parent.t(), priority=self.priority, parent=self.parent)
 
             
         
         
-        
+
     

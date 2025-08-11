@@ -33,11 +33,15 @@ class Model(ABC):
         self._pools = []
         self._processes = []
 
+
         # Sub-models
         self._models = []
 
         # Available
         self._available = {}
+        
+        # Event messages
+        self._messages = {}
 
         # Output
         self._out = []  # Elements to track for output
@@ -330,6 +334,22 @@ class Model(ABC):
         
 
 
+    def _push_event(self, event):
+        
+        #assert event.time >= self.t(), "Event time must be greater than or equal present simulation time."
+
+        if event.time >= self.t():
+            heapq.heappush(self._event_queue, event)
+        else:
+            print("Warning: Event time is less than current simulation time. Event dropped.")
+
+
+
+    def _pop_event(self):
+        return heapq.heappop(self._event_queue)
+        
+        
+
     # process wait types
 
     def wait_step(self, steps = 1):
@@ -439,6 +459,50 @@ class Model(ABC):
         ev.routine = seq_routine
         
         return ev
+
+
+
+    def wait_message(self, message):
+        
+        def msg_routine():
+            
+            x = yield
+            
+            return x
+            
+        ev = Event(msg_routine,  parent=self)
+        
+        self.register_message(message, ev)
+        
+        return ev
+        
+    
+    def register_message(self, message, event):
+        
+        if message not in self._messages:
+            
+            self._messages[message] = []
+            
+        self._messages[message].append(event)
+        
+        
+        
+        
+    def send_message(self, message, value=None):
+        
+        if message in self._messages:
+            
+            for ev in self._messages[message]:
+                
+                try:
+                    ev.resume(value)
+                    
+                except StopIteration as e:
+                    pass
+                
+            self._messages[message] = []    
+        
+            
 
 
     # def _register(self):
@@ -808,8 +872,10 @@ class Model(ABC):
     def _update_events(self, t_next):
         
         while len(self._event_queue) > 0 and self._event_queue[0].time <= t_next:
-            e = heapq.heappop(self._event_queue)
-            self.t.push_value(e.time)
+            #e = heapq.heappop(self._event_queue)
+            e = self._pop_event()
+            #self.t.push_value(e.time)
+            self._update_time(e.time)
             e.run()
                 
 
@@ -917,11 +983,12 @@ class Model(ABC):
         # self.t.reset()
         # self.date.reset()
         
-    def _reset_time(self, sim_time=None, event_queue=None):
+    def _reset_run(self, sim_time=None, event_queue=None, messages=None):
         
         self._event_queue = []
+        self._messages = {}
         self.t.reset()
-        self.date.reset()
+        
         
         # push the root time and event queue down to all child models
         if sim_time == None:
@@ -933,9 +1000,14 @@ class Model(ABC):
             event_queue = self._event_queue
         else:
             self._event_queue = event_queue
-            
+        
+        if messages == None:
+            messages = self._messages
+        else:
+            self._messages = messages
+        
         for m in self._models:
-            m._reset_time(sim_time, event_queue)
+            m._reset_run(sim_time, event_queue, messages)
         
         
     def _reset_processes(self):
@@ -953,14 +1025,18 @@ class Model(ABC):
         self._output_mc = None
 
 
+    def _reset_messages(self):
+        self._messages = {}
+        
+
     # Reset all model elements to initial conditions
     def _reset(self):
 
         # Empty event queue
         #self._event_queue = []
 
-        # Reset time
-        self._reset_time()
+        # Reset model
+        self._reset_run()
         self._reset_output()
 
         # Reset all elements
@@ -969,6 +1045,8 @@ class Model(ABC):
         self._reset_equations()
         self._reset_flows()
         self._reset_processes()
+        
+
 
 
     # Save all output
@@ -987,12 +1065,12 @@ class Model(ABC):
         return self._output
 
 
-    def start_process(self, event, delay=0):
-        if delay > 0:
-            event.time = self.t() + delay
-            heapq.heappush(self._event_queue, event)
-        else:
-            event.run()
+    # def start_process(self, event, delay=0):
+        # if delay > 0:
+            # event.time = self.t() + delay
+            # heapq.heappush(self._event_queue, event)
+        # else:
+            # event.run()
         
 
     # Do a run
