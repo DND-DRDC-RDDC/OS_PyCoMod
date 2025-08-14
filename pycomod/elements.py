@@ -87,7 +87,8 @@ class BuildingBlock:
         
         return h
     
-
+    def __iter__(self):
+        return iter(self())
 
 
 
@@ -534,25 +535,22 @@ class Event:
         
         if isinstance(y, TimeStep):
             self.time = self.parent.t() + self.parent.dt()*y.steps
-            #heapq.heappush(self.parent._event_queue, self)
             self.parent._push_event(self)
         
         elif isinstance(y, Time):
             self.time = y.time
-            #heapq.heappush(self.parent._event_queue, self)
             self.parent._push_event(self)
             
         elif isinstance(y, Delay):
             self.time = self.parent.t() + y.delay
-            #heapq.heappush(self.parent._event_queue, self)
             self.parent._push_event(self)
             
         elif isinstance(y, Date):
             self.time = (y.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
-            #heapq.heappush(self.parent._event_queue, self)  
             self.parent._push_event(self)
             
         elif isinstance(y, Event):
+            y.time = self.parent.t()
             y.origin = self
             y.run()
         
@@ -612,20 +610,36 @@ class Event:
 
     def start(self, start=None):
         if start != None:
-            if isinstance(start, Time):
+            
+            
+            if isinstance(start, TimeStep):
+                self.time = self.parent.t() + self.parent.dt()*start.steps
+                self.parent._push_event(self)
+            
+            elif isinstance(start, Time):
                 self.time = start.time
-                #heapq.heappush(self.parent._event_queue, self)
                 self.parent._push_event(self)
                 
             elif isinstance(start, Delay):
                 self.time = self.parent.t() + start.delay
-                #heapq.heappush(self.parent._event_queue, self)
                 self.parent._push_event(self)
                 
             elif isinstance(start, Date):
-                self.time = (start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
-                #heapq.heappush(self.parent._event_queue, self)
+                self.time = (start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_valu
                 self.parent._push_event(self)
+                
+            elif isinstance(start, Event):
+                
+                #ev_sub = Event(self.routine, args=self.args, priority=self.priority, parent=self.parent)
+                
+                def routine():
+                    yield start
+                    x = yield self
+                    return x
+                
+                ev = Event(routine, time=self.parent.t(), priority=self.priority, parent=self.parent)
+                
+                ev.run()
         else:
             self.run()
           
@@ -690,22 +704,25 @@ class Process:
     # put the event on the queue if a time is specified
     def reset(self):
         if self.start != None:
-            if isinstance(self.start, Time):
+            
+            if isinstance(self.start, TimeStep):
+                time = self.parent.t() + self.parent.dt()*self.start.steps
+                ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
+                self.parent._push_event(ev)
+                
+            elif isinstance(self.start, Time):
                 time = self.start.time
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                #heapq.heappush(self.parent._event_queue, ev)
                 self.parent._push_event(ev)
                 
             elif isinstance(self.start, Delay):
                 time = self.parent.t() + self.start.delay
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                #heapq.heappush(self.parent._event_queue, ev)
                 self.parent._push_event(ev)
                 
             elif isinstance(self.start, Date):
                 time = (self.start.date - self.parent.date()) / self.parent.tunit() + self.parent.t.init_value
                 ev = Event(self.routine, args=self.args, time=time, priority=self.priority, parent=self.parent)
-                #heapq.heappush(self.parent._event_queue, ev)
                 self.parent._push_event(ev)
                 
             elif isinstance(self.start, Event):
@@ -719,7 +736,6 @@ class Process:
                 
                 ev = Event(routine, time=self.parent.t.init_value, priority=self.priority, parent=self.parent)
                 
-                #heapq.heappush(self.parent._event_queue, ev)
                 self.parent._push_event(ev)
                 
             

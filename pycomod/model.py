@@ -351,13 +351,22 @@ class Model(ABC):
         
 
     # process wait types
+    
+
 
     def wait_step(self, steps = 1):
+        
         return Timestep(steps)
 
     def wait_time(self, time):
         
         return Time(time)
+        
+        
+    def wait_sim_start(self):
+        
+        return self.wait_time(self.t.init_value)
+        
         
     def wait_date(self, date):
         
@@ -580,9 +589,9 @@ class Model(ABC):
                 sub_key = v[0][1:-1] # strip the <> from the key name
                 getattr(self, k).set_init(init, sub_key)
                 
-            # if it's the output list    
-            elif k == 'out':
-                self._out = v  
+            # # if it's the output list    
+            # elif k == 'out':
+                # self._out = v  
                 
             # else it's a regular init value (or array)
             else:
@@ -626,11 +635,11 @@ class Model(ABC):
                 else:
                     d[key][k] = [v()]
 
-        # Add output tracking
-        if self.out is None:
-            d[key]['out'] = [None]
-        else:
-            d[key]['out'] = self.out
+        # # Add output tracking
+        # if self.out is None:
+            # d[key]['out'] = [None]
+        # else:
+            # d[key]['out'] = self.out
 
         return d
 
