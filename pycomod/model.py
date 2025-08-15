@@ -126,17 +126,13 @@ class Model(ABC):
     def __getattr__(self, name):
         return self._available[name]
     
-    
-    # def _add_name(item, name, key):
-        # if name != None:
-            # if key != None:
-                # if name not in self._available:
-                    # self._available[name] = {}
-                # self._available[name][key] = item
-            # else:
-                # self._available[name] = item
-                
-    
+
+
+    def connect(self, **kwargs):
+        for name in kwargs:
+            getattr(self, name).connect(kwargs[name])
+            
+
     # element creation functions
     def pool(self, value=1, allow_neg=False, name=None, external=False):
         
