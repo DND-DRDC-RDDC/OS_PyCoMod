@@ -4,7 +4,7 @@ import heapq
 import numpy as np
 import pandas as pd
 
-from .elements import (BuildingBlock, SimTime, SimDate, RunInfo,
+from .elements import (BuildingBlock, VirtualBuildingBlock, SimTime, SimDate, RunInfo,
                               Pool, Flow, Parameter, Equation, Step, Impulse, Event, Process, Delay, Time, Date, TimeStep)
 
 
@@ -32,6 +32,8 @@ class Model(ABC):
         self._flows = []
         self._pools = []
         self._processes = []
+        
+        self._external = [] #for external elements
 
 
         # Sub-models
@@ -136,15 +138,28 @@ class Model(ABC):
                 
     
     # element creation functions
-    def pool(self, value=1, allow_neg=False, name=None):
-        e = Pool(value, allow_neg, parent=self)
-        self._pools.append(e)
+    def pool(self, value=1, allow_neg=False, name=None, external=False):
         
-        if name != None:
-            self._available[name] = e
-            self._out.append(name)
-        
-        return e
+        if external:
+            
+            e = Pool(value, allow_neg, parent=self)
+            
+            v = VirtualBuildingBlock(Pool)
+            v.connect(e)
+            
+            self._external.append(v)
+            
+            return v
+            
+        else:
+            e = Pool(value, allow_neg, parent=self)
+            self._pools.append(e)
+            
+            if name != None:
+                self._available[name] = e
+                self._out.append(name)
+            
+            return e
         
     # def flow(self, rate_func=lambda: 1, src=None, dest=None, discrete=False):
         # e = Flow(rate_func, src, dest, discrete)

@@ -9,6 +9,8 @@ from types import GeneratorType
 def f(other):
     if isinstance(other, BuildingBlock):
         return other()
+    elif isinstance(other, VirtualBuildingBlock):
+        return other._target()
     else:
         return other
     
@@ -184,6 +186,127 @@ class BuildingBlock:
 
 
 
+class VirtualBuildingBlock:
+    def __init__(self, cls=None):
+        self._cls = cls
+        self._target = None
+
+
+    def connect(self, target):
+        
+        assert isinstance(target, self._cls)
+        
+        self._target = target
+
+        
+    def __getattr__(self, name):
+        return getattr(self._target, name)
+        
+        
+    def __call__(self):
+        return self._target()
+        
+        
+    def __iter__(self):
+        return iter(self._target())
+
+    def __getitem__(self, index):
+        return self._target()[index]
+        
+    def __len__(self):
+        return len(self._target())
+
+
+    # data model methods
+    def __float__(self):
+        return float(self._target())
+        
+    def __int__(self):
+        return int(self._target())
+    
+    # comparators
+    def __lt__(self, other):
+        return self._target() < f(other)
+        
+    def __le__(self, other):
+        return self._target() <= f(other)
+        
+    def __eq__(self, other):
+        return self._target() == f(other)
+        
+    def __ne__(self, other):
+        return self._target() != f(other)
+        
+    def __gt__(self, other):
+        return self._target() > f(other)
+        
+    def __ge__(self, other):
+        return self._target() >= f(other)
+        
+        
+    # numeric
+    def __add__(self, other):
+        return self._target() + f(other)
+        
+    def __sub__(self, other):
+        return self._target() - f(other)
+        
+    def __mul__(self, other):
+        return self._target() * f(other)
+        
+    def __matmul__(self, other):
+        return self._target() @ f(other)
+        
+    def __truediv__(self, other):
+        return self._target() / f(other)
+        
+    def __floordiv__(self, other):
+        return self._target() // f(other)
+        
+    def __mod__(self, other):
+        return self._target() % f(other)
+        
+    def __pow__(self, other):
+        return self._target() ** f(other)
+        
+        
+    def __radd__(self, other):
+        return f(other) + self._target()
+        
+    def __rsub__(self, other):
+        return f(other) - self._target()
+        
+    def __rmul__(self, other):
+        return f(other) * self._target()
+        
+    def __rmatmul__(self, other):
+        return f(other) @ self._target()
+        
+    def __rtruediv__(self, other):
+        return f(other) / self._target()
+        
+    def __rfloordiv__(self, other):
+        return f(other) // self._target()
+        
+    def __rmod__(self, other):
+        return f(other) % self._target()
+        
+    def __rpow__(self, other):
+        return f(other) ** self._target()
+        
+        
+    def __neg__(self):
+        return -self._target()
+        
+    def __abs__(self):
+        return abs(self._target())
+        
+        
+        
+        
+        
+        
+        
 
 # Sim time
 class SimTime(BuildingBlock):
