@@ -370,7 +370,7 @@ class RunInfo(BuildingBlock):
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, allow_neg=False, parent=None):
+    def __init__(self, value=1, allow_neg=False, parent=None, pool_type=float):
         super().__init__(value, parent)
         self.allow_neg = allow_neg
         self.delta = 0

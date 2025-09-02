@@ -34,6 +34,8 @@ class Model(ABC):
         self._processes = []
         
         self._external = [] #for external elements
+        
+        self._next_uid = 1 #unique ids used for pool members
 
 
         # Sub-models
@@ -61,6 +63,16 @@ class Model(ABC):
             self.set_available(a)
 
 
+    def _get_uid(self):
+        uid = self._next_uid
+        self._next_uid += 1
+        
+        return uid
+
+    def _get_uids(self, n):
+        uids = [self._next_uid + i for i in range(n)]
+        self._next_uid += n
+        return uids
 
 
     # Read-only properties
