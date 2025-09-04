@@ -35,7 +35,7 @@ class Model(ABC):
         
         self._external = [] #for external elements
         
-        self._next_uid = 1 #unique ids used for pool members
+        #self._next_uid = 1 #unique ids used for pool members
 
 
         # Sub-models
@@ -63,16 +63,16 @@ class Model(ABC):
             self.set_available(a)
 
 
-    def _get_uid(self):
-        uid = self._next_uid
-        self._next_uid += 1
+    # def _get_uid(self):
+        # uid = self._next_uid
+        # self._next_uid += 1
         
-        return uid
+        # return uid
 
-    def _get_uids(self, n):
-        uids = [self._next_uid + i for i in range(n)]
-        self._next_uid += n
-        return uids
+    # def _get_uids(self, n):
+        # uids = [self._next_uid + i for i in range(n)]
+        # self._next_uid += n
+        # return uids
 
 
     # Read-only properties
@@ -146,11 +146,11 @@ class Model(ABC):
             
 
     # element creation functions
-    def pool(self, value=1, allow_neg=False, name=None, external=False):
+    def pool(self, value=1, allow_neg=False, pool_type='float', name=None, external=False):
         
         if external:
             
-            e = Pool(value, allow_neg, parent=self)
+            e = Pool(value, allow_neg, pool_type, parent=self)
             
             v = VirtualBuildingBlock(Pool)
             v.connect(e)
@@ -160,7 +160,7 @@ class Model(ABC):
             return v
             
         else:
-            e = Pool(value, allow_neg, parent=self)
+            e = Pool(value, allow_neg, pool_type, parent=self)
             self._pools.append(e)
             
             if name != None:

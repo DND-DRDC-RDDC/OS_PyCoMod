@@ -1,5 +1,6 @@
 import datetime
 import heapq
+import math
 import numpy as np
 from types import GeneratorType
 
@@ -14,6 +15,44 @@ def f(other):
     else:
         return other
     
+
+class PoolDict(dict):
+
+    def _setparent(self, parent):
+        self._parent = parent
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+
+    def __delitem__(self, key):
+        dict.__delitem__(self, key)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+
+    def pop(self, key, default=None):
+        dict.pop(self, key, default)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+        
+    def popitem(self):
+        dict.popitem(self)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+        
+    def update(self, other):
+        dict.update(self, other)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+        
+    def clear(self):
+        dict.clear(self)
+        self._parent.update_value(len(self))
+        self._parent.save_hist()
+        
 
 # Building block class for model elements
 # Handles the initial value, current value, and history of values for the
@@ -367,13 +406,40 @@ class RunInfo(BuildingBlock):
 
 
 # Class representing a pool of people, e.g. the S, I and R in SIR models
+# pool_type can be "float", "int", "discrete"
 class Pool(BuildingBlock):
 
     # Constructor
-    def __init__(self, value=1, allow_neg=False, parent=None, pool_type="float"):
+    def __init__(self, value=1, allow_neg=False, pool_type="float", parent=None):
+        
+        self.pool_type = pool_type
+        
+        if pool_type == "int":
+            value = int(value)
+            
+        elif pool_type == "discrete":
+            value = int(value)
+
         super().__init__(value, parent)
         self.allow_neg = allow_neg
         self.delta = 0
+        self.next_uid = 1
+        
+        if pool_type == "discrete":
+            self.members = PoolDict()
+            self.members._setparent(self)
+            self.members.update(self.create_members(value))
+        
+    
+    def create_members(self, num):
+        pref = str(id(self))
+        keys = [pref + '.' + str(self.next_uid + i) for i in range(num)]
+        values = [{'uid': k} for k in keys]
+        
+        self.next_uid += num
+        
+        return dict(zip(keys, values))
+
 
     # Reset
     def reset(self):
@@ -444,6 +510,15 @@ class Flow(BuildingBlock):
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
+        
+        if src is not None:
+            if src.pool_type in ('int', 'discrete'):
+                discrete = True
+                
+        if dest is not None:
+            if dest.pool_type in ('int', 'discrete'):
+                discrete = True
+        
         self.discrete = discrete
         self.rem = 0
         
