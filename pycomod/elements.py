@@ -503,10 +503,13 @@ class Pool(BuildingBlock):
 # values in the model
 # If the flow equation defines a volume (as in discrete flows), the volume
 # parameter is set to true
+
+rng = np.random.default_rng()
+
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, parent=None):
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, parent=None):
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -520,42 +523,83 @@ class Flow(BuildingBlock):
                 discrete = True
         
         self.discrete = discrete
+        self.stochastic = stochastic
         self.rem = 0
+        self.parent = parent
+        
+        # if self.stochastic:
+            # mean = self.rate_func()
+            # var = mean
+            # alpha = mean*mean/var
+            # beta = var/mean
+            # v = rng.gamma(alpha, beta) * parent.dt
+            
+        # else:
+            # v = self.rate_func() * parent.dt
+        
+        # if self.discrete:
+            # v_ = round(v,0)
+            # self.rem = v - v_
+            # v = v_
+            
+        v = self.calc()
         
         
-        v = self.rate_func() * parent.dt
+        super().__init__(v, parent)
+
+
+    # calculate the value of the flow
+    def calc(self):
+        if self.stochastic:
+            mean = self.rate_func()
+            var = mean
+            
+            if mean == 0.0 or var == 0.0:
+                v = self.rate_func() * self.parent.dt() + self.rem
+                
+            else:
+                alpha = mean*mean/var
+                beta = var/mean
+                
+                v = rng.gamma(alpha, beta) * self.parent.dt() + self.rem
+            
+        else:
+            v = self.rate_func() * self.parent.dt() + self.rem
         
         if self.discrete:
             v_ = round(v,0)
             self.rem = v - v_
             v = v_
-        
-        
-        super().__init__(v, parent)
+            
+        return v
 
 
     # Reset rate values
     def reset(self):
         self.rem = 0
 
-        v = self.rate_func() * self.parent.dt()
+        # v = self.rate_func() * self.parent.dt()
         
-        if self.discrete:
-            v_ = round(v,0)
-            self.rem = v - v_
-            v = v_
+        # if self.discrete:
+            # v_ = round(v,0)
+            # self.rem = v - v_
+            # v = v_
+            
+        v = self.calc()
         
         super().reset(v)
         
     # Update the flow
     def update(self):
         
-        v = self.rate_func()*self.parent.dt() + self.rem
+        # v = self.rate_func()*self.parent.dt() + self.rem
         
-        if self.discrete:
-            v_ = round(v,0)
-            self.rem = v - v_
-            v = v_
+        # if self.discrete:
+            # v_ = round(v,0)
+            # self.rem = v - v_
+            # v = v_
+            
+        v = self.calc()
         
         self.update_value(v)
 
@@ -570,8 +614,6 @@ class Flow(BuildingBlock):
 
 
 # Class representing a model parameter that can change over time
-# IDEA: if parameters can optionally accept a function, this can be called to
-# set the parameter value which would accomplish what random samples do
 class Parameter(BuildingBlock):
 
     # Constructor
