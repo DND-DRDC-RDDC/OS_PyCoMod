@@ -106,17 +106,15 @@ class BuildingBlock:
     # Calling the building block returns its most recent value
     # Optional idx parameter used to return past values, e.g. Block(-2) returns
     # value from two timesteps ago
-    def __call__(self):
-        return self.value_hist[-1]
-        
-        # if idx < 0:
-            # try:
-                # return self.value_hist[idx]
-            # except IndexError:
-                # return self.init_value
-        # else:
-            # raise Exception("Index must be negative to reference past value. "
-                            # "Can't reference present or future value.")
+    def __call__(self, idx=-1):
+        if idx < 0:
+            try:
+                return self.value_hist[idx]
+            except IndexError:
+                return self.init_value
+        else:
+            raise Exception("Index must be negative to reference past value. "
+                            "Can't reference future value.")
 
     # Get the history of values for this element as a numpy array (true DES time)
     def get_hist(self):
@@ -509,7 +507,7 @@ rng = np.random.default_rng()
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, parent=None):
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, variance=None, parent=None):
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -524,6 +522,7 @@ class Flow(BuildingBlock):
         
         self.discrete = discrete
         self.stochastic = stochastic
+        self.variance = variance
         self.rem = 0
         self.parent = parent
         
@@ -545,14 +544,18 @@ class Flow(BuildingBlock):
         v = self.calc()
         
         
-        super().__init__(v, parent)
+        super().__init__(v/self.parent.dt(), parent)
 
 
     # calculate the value of the flow
     def calc(self):
         if self.stochastic:
             mean = self.rate_func()
-            var = mean
+            
+            if self.variance is None:
+                var = mean / self.parent.dt()
+            else:
+                var = self.variance() / self.parent.dt()
             
             if mean == 0.0 or var == 0.0:
                 v = self.rate_func() * self.parent.dt() + self.rem
@@ -587,7 +590,7 @@ class Flow(BuildingBlock):
             
         v = self.calc()
         
-        super().reset(v)
+        super().reset(v/self.parent.dt())
         
     # Update the flow
     def update(self):
@@ -601,7 +604,7 @@ class Flow(BuildingBlock):
             
         v = self.calc()
         
-        self.update_value(v)
+        self.update_value(v/self.parent.dt())
 
 
     # Add flows to the src and dest pools
