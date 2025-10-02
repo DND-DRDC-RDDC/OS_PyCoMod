@@ -507,7 +507,7 @@ rng = np.random.default_rng()
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, variance=None, parent=None):
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, variance=None, when=None, parent=None):
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -523,6 +523,7 @@ class Flow(BuildingBlock):
         self.discrete = discrete
         self.stochastic = stochastic
         self.variance = variance
+        self.when = when
         self.rem = 0
         self.parent = parent
         
@@ -549,7 +550,13 @@ class Flow(BuildingBlock):
 
     # calculate the value of the flow
     def calc(self):
+        
+        if self.when is not None and not self.when():
+            return 0
+        
+        
         if self.stochastic:
+            
             mean = self.rate_func()
             
             if self.variance is None:

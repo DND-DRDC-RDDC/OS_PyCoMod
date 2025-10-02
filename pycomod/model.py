@@ -190,7 +190,9 @@ class Model(ABC):
             discrete = False
             stochastic = False
             variance = None
+            when = None
             name = None
+            
             
             if 'src' in kwargs:
                 src = kwargs['src']
@@ -202,11 +204,13 @@ class Model(ABC):
                 stochastic = kwargs['stochastic']
             if 'variance' in kwargs:
                 variance = kwargs['variance']
+            if 'when' in kwargs:
+                when = kwargs['when']
             if 'name' in kwargs:
                 name = kwargs['name']
             
             
-            e = Flow(args[0], src, dest, discrete, stochastic, variance, parent=self)
+            e = Flow(args[0], src, dest, discrete, stochastic, variance, when, parent=self)
             self._flows.append(e)
             
             if name != None:
@@ -222,6 +226,7 @@ class Model(ABC):
             discrete = False
             stochastic = False
             variance = None
+            when = None
             name = None
             
             if 'src' in kwargs:
@@ -234,11 +239,13 @@ class Model(ABC):
                 stochastic = kwargs['stochastic']
             if 'variance' in kwargs:
                 variance = kwargs['variance']
+            if 'when' in kwargs:
+                when = kwargs['when']
             if 'name' in kwargs:
                 name = kwargs['name']
                 
             def inner(rate_func):
-                e = Flow(rate_func, src, dest, discrete, stochastic, variance, parent=self)
+                e = Flow(rate_func, src, dest, discrete, stochastic, variance, when, parent=self)
                 self._flows.append(e)
                 
                 if name != None:
