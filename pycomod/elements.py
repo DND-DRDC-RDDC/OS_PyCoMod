@@ -104,12 +104,20 @@ class BuildingBlock:
         self.time_hist[-1] = self.parent.t()
 
     # Calling the building block returns its most recent value
-    # Optional idx parameter used to return past values, e.g. Block(-2) returns
-    # value from two timesteps ago
-    def __call__(self, idx=-1):
-        if idx < 0:
+    # Optional delta parameter used to return past values, e.g. Pop(-2) returns
+    # value from two timeunits ago
+    # non-whole values for delta are allowed
+    def __call__(self, delta=0):
+        if delta == 0:
+            return self.value_hist[-1]
+        elif delta < 0:
             try:
-                return self.value_hist[idx]
+                x = -1
+                
+                while self.time_hist[x] > (self.parent.t.value + delta):
+                    x -= 1
+                
+                return self.value_hist[x]
             except IndexError:
                 return self.init_value
         else:
@@ -581,6 +589,7 @@ class Flow(BuildingBlock):
             self.rem = v - v_
             v = v_
             
+            
         return v
 
 
@@ -617,10 +626,10 @@ class Flow(BuildingBlock):
     # Add flows to the src and dest pools
     def add_flows(self):
         if self.src is not None:
-            self.src.add_flow(-self.value)
+            self.src.add_flow(-self.value*self.parent.dt())
 
         if self.dest is not None:
-            self.dest.add_flow(self.value)
+            self.dest.add_flow(self.value*self.parent.dt())
 
 
 # Class representing a model parameter that can change over time
