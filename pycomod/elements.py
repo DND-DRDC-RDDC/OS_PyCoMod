@@ -107,8 +107,8 @@ class BuildingBlock:
     # Optional delta parameter used to return past values, e.g. Pop(-2) returns
     # value from two timeunits ago
     # non-whole values for delta are allowed
-    def __call__(self, delta=0):
-        if delta == 0:
+    def __call__(self, delta=None):
+        if delta is None:
             return self.value_hist[-1]
         elif delta < 0:
             try:
@@ -121,7 +121,7 @@ class BuildingBlock:
             except IndexError:
                 return self.init_value
         else:
-            raise Exception("Index must be negative to reference past value. "
+            raise Exception("Delta must be negative to reference past value. "
                             "Can't reference future value.")
 
     # Get the history of values for this element as a numpy array (true DES time)
@@ -463,6 +463,10 @@ class Pool(BuildingBlock):
 
     # Add a flow volume to the pool
     def add_flow(self, volume):
+        
+        if volume > 0:
+            
+        
         self.delta += volume
 
 
@@ -486,6 +490,27 @@ class Pool(BuildingBlock):
             self.update_value(v)
             self.save_hist()
 
+
+    def inflow(self, delta=None):
+        
+        if delta is None:
+            delta = -self.parent.dt.value
+        
+        elif delta > -self.parent.dt.value:
+            delta = -self.parent.dt.value
+        
+        return max(0, self(delta) - self(delta - self.parent.dt.value)) / self.parent.dt.value
+        
+    def outflow(self, delta=None):
+        
+        if delta is None:
+            delta = -self.parent.dt.value
+        
+        elif delta > -self.parent.dt.value:
+            delta = -self.parent.dt.value  
+            
+        return max(0, self(delta - self.parent.dt.value) - self(delta)) / self.parent.dt.value
+        
 
 
     # Update the value of the pool based on flows affecting the pool
