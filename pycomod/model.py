@@ -129,7 +129,7 @@ class Model(ABC):
                 if output == None:
                     self._out.append(key)
         
-        self._available = names
+        self._available = names | self._available
         
         if output != None:
             self._out = [o.name for o in output]
@@ -1035,31 +1035,66 @@ class Model(ABC):
         # self.t.reset()
         # self.date.reset()
         
-    def _reset_run(self, sim_time=None, event_queue=None, messages=None):
-        
+    def _reset_run(self, sim_time=None, sim_date=None, sim_tunit=None, sim_dt=None, sim_end=None, sim_reps=None, event_queue=None, messages=None):
+
         self._event_queue = []
         self._messages = {}
         self.t.reset()
         
+        # get/set all global run objects
         
-        # push the root time and event queue down to all child models
+        # time
         if sim_time == None:
             sim_time = self._t
         else:
             self._t = sim_time
-            
+        
+        # date
+        if sim_date == None:
+            sim_date = self._date
+        else:
+            self._date = sim_date
+        
+        # time unit
+        if sim_tunit == None:
+            sim_tunit = self._tunit
+        else:
+            self._tunit = sim_tunit
+        
+        # dt
+        if sim_dt == None:
+            sim_dt = self._dt
+        else:
+            self._dt = sim_dt
+        
+        # end
+        if sim_end == None:
+            sim_end = self._end
+        else:
+            self._end = sim_end
+        
+        # reps
+        if sim_reps == None:
+            sim_reps = self._reps
+        else:
+            self._reps = sim_reps
+        
+        # event queue
         if event_queue == None:
             event_queue = self._event_queue
         else:
             self._event_queue = event_queue
         
+        # messages
         if messages == None:
             messages = self._messages
         else:
             self._messages = messages
         
+        
+        # push root model run objects to all children
         for m in self._models:
-            m._reset_run(sim_time, event_queue, messages)
+            m._reset_run(sim_time, sim_date, sim_tunit, sim_dt, sim_end, sim_reps, event_queue, messages)
         
         
     def _reset_processes(self):

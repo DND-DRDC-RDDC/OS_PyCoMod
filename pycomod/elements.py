@@ -463,10 +463,6 @@ class Pool(BuildingBlock):
 
     # Add a flow volume to the pool
     def add_flow(self, volume):
-        
-        if volume > 0:
-            
-        
         self.delta += volume
 
 
