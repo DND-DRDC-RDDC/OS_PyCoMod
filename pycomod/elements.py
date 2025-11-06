@@ -94,6 +94,7 @@ class BuildingBlock:
     def save_hist(self):
         self.value_hist.append(self.value)
         self.time_hist.append(self.time)
+        
 
 
     # pushes a current value on the element including the most recent value in value_hist
@@ -428,8 +429,15 @@ class Pool(BuildingBlock):
 
         super().__init__(value, parent)
         self.allow_neg = allow_neg
+        
         self.delta = 0
+        self.delta_in = 0
+        self.delta_out = 0
+        
         self.next_uid = 1
+        
+        self.inflow_series = [0]
+        self.outflow_series = [0]
         
         if pool_type == "discrete":
             self.members = PoolDict()
@@ -451,24 +459,37 @@ class Pool(BuildingBlock):
     def reset(self):
         super().reset()
         self.delta = 0
+        self.delta_in = 0
+        self.delta_out = 0
 
     # Pools accept an initial condition
     def init_cond(self, value):
         super().reset(value)
         self.delta = 0
+        self.delta_in = 0
+        self.delta_out = 0
 
     # Reset flows
     def reset_flows(self):
         self.delta = 0
+        self.delta_in = 0
+        self.delta_out = 0
 
     # Add a flow volume to the pool
     def add_flow(self, volume):
         self.delta += volume
+        
+        if volume > 0:
+            self.delta_in += volume
+        elif volume < 0:
+            self.delta_out += volume
 
 
     # Actions that can be applied to pools in processes
     def add(self, amount):
         v = self.value + amount
+       
+        self.delta_in += amount
         
         if self.parent.t() == 0:
             self.push_value(v)
@@ -479,6 +500,8 @@ class Pool(BuildingBlock):
         
     def remove(self, amount):
         v = self.value - amount
+        
+        self.delta_out += amount
 
         if self.parent.t() == 0:
             self.push_value(v)
@@ -489,24 +512,62 @@ class Pool(BuildingBlock):
 
     def inflow(self, delta=None):
         
+        # if delta is None:
+            # delta = -self.parent.dt.value
+        
+        # elif delta > -self.parent.dt.value:
+            # delta = -self.parent.dt.value
+        
+        # return max(0, self(delta) - self(delta - self.parent.dt.value)) / self.parent.dt.value
+        
+                
         if delta is None:
-            delta = -self.parent.dt.value
-        
-        elif delta > -self.parent.dt.value:
-            delta = -self.parent.dt.value
-        
-        return max(0, self(delta) - self(delta - self.parent.dt.value)) / self.parent.dt.value
+            return self.inflow_series[-1] / self.parent.dt.value
+        elif delta < 0:
+            try:
+                x = int(delta/self.parent.dt.value)
+                
+                if x > -1:
+                    x = -1
+                
+                return self.inflow_series[x] / self.parent.dt.value
+            except IndexError:
+                return 0
+        else:
+            raise Exception("Delta must be negative to reference past value. "
+                            "Can't reference future value.")
+            
+            
+            
         
     def outflow(self, delta=None):
         
-        if delta is None:
-            delta = -self.parent.dt.value
+        # if delta is None:
+            # delta = -self.parent.dt.value
         
-        elif delta > -self.parent.dt.value:
-            delta = -self.parent.dt.value  
+        # elif delta > -self.parent.dt.value:
+            # delta = -self.parent.dt.value  
             
-        return max(0, self(delta - self.parent.dt.value) - self(delta)) / self.parent.dt.value
+        # return max(0, self(delta - self.parent.dt.value) - self(delta)) / self.parent.dt.value
         
+
+        if delta is None:
+            return self.outflow_series[-1] / self.parent.dt.value
+        elif delta < 0:
+            try:
+                x = int(delta/self.parent.dt.value)
+                
+                if x > -1:
+                    x = -1
+                
+                return self.outflow_series[x] / self.parent.dt.value
+            except IndexError:
+                return 0
+        else:
+            raise Exception("Delta must be negative to reference past value. "
+                            "Can't reference future value.")
+
+
 
 
     # Update the value of the pool based on flows affecting the pool
@@ -517,11 +578,15 @@ class Pool(BuildingBlock):
         
         v = self.value + self.delta
         
+
         # Prevent negative values for pool (this needs more thought)
         if not self.allow_neg:
             v = np.maximum(v, 0)
         
         self.update_value(v)
+
+        self.inflow_series.append(self.delta_in)
+        self.outflow_series.append(self.delta_out)
 
         self.reset_flows()
 
