@@ -191,6 +191,7 @@ class Model(ABC):
             stochastic = False
             variance = None
             when = None
+            limit = None
             name = None
             
             
@@ -206,11 +207,13 @@ class Model(ABC):
                 variance = kwargs['variance']
             if 'when' in kwargs:
                 when = kwargs['when']
+            if 'limit' in kwargs:
+                limit = kwargs['limit']
             if 'name' in kwargs:
                 name = kwargs['name']
             
             
-            e = Flow(args[0], src, dest, discrete, stochastic, variance, when, parent=self)
+            e = Flow(args[0], src, dest, discrete, stochastic, variance, when, limit, parent=self)
             self._flows.append(e)
             
             if name != None:
@@ -227,6 +230,7 @@ class Model(ABC):
             stochastic = False
             variance = None
             when = None
+            limit = None
             name = None
             
             if 'src' in kwargs:
@@ -241,11 +245,13 @@ class Model(ABC):
                 variance = kwargs['variance']
             if 'when' in kwargs:
                 when = kwargs['when']
+            if 'limit' in kwargs:
+                limit = kwargs['limit']
             if 'name' in kwargs:
                 name = kwargs['name']
                 
             def inner(rate_func):
-                e = Flow(rate_func, src, dest, discrete, stochastic, variance, when, parent=self)
+                e = Flow(rate_func, src, dest, discrete, stochastic, variance, when, limit, parent=self)
                 self._flows.append(e)
                 
                 if name != None:
@@ -1327,3 +1333,7 @@ class Model(ABC):
         for n in range(int(self.reps())):
             self._run()
             self._save_output_mc()
+            
+            print("Done {n} / {N}".format(n=n+1, N=self.reps()))
+
+

@@ -461,6 +461,8 @@ class Pool(BuildingBlock):
         self.delta = 0
         self.delta_in = 0
         self.delta_out = 0
+        self.inflow_series = [0]
+        self.outflow_series = [0]
 
     # Pools accept an initial condition
     def init_cond(self, value):
@@ -482,7 +484,7 @@ class Pool(BuildingBlock):
         if volume > 0:
             self.delta_in += volume
         elif volume < 0:
-            self.delta_out += volume
+            self.delta_out -= volume
 
 
     # Actions that can be applied to pools in processes
@@ -601,7 +603,10 @@ rng = np.random.default_rng()
 class Flow(BuildingBlock):
 
     # Constructor
-    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, variance=None, when=None, parent=None):
+    def __init__(self, rate_func=lambda: 1, src=None, dest=None, discrete=False, stochastic=False, variance=None, when=None, limit=None, parent=None):
+        
+        super().__init__(0, parent)
+        
         self.rate_func = rate_func  # Function defining the flow
         self.src = src
         self.dest = dest
@@ -618,6 +623,10 @@ class Flow(BuildingBlock):
         self.stochastic = stochastic
         self.variance = variance
         self.when = when
+        
+        self.limit = limit
+        self.limit_reached = False
+        
         self.rem = 0
         self.parent = parent
         
@@ -639,7 +648,8 @@ class Flow(BuildingBlock):
         v = self.calc()
         
         
-        super().__init__(v/self.parent.dt(), parent)
+        #super().__init__(v/self.parent.dt(), parent)
+        self.push_value(v/self.parent.dt())
 
 
     # calculate the value of the flow
@@ -674,6 +684,24 @@ class Flow(BuildingBlock):
             v_ = round(v,0)
             self.rem = v - v_
             v = v_
+        
+        if self.limit is not None:
+            
+            if not self.limit_reached:
+            
+                total = sum(self.value_hist) * self.parent.dt()
+                
+                if (total + v) > self.limit:
+                    v = self.limit - total
+                    self.limit_reached = True
+                    
+                elif (total + v) < -self.limit:
+                    v = -self.limit - total
+                    self.limit_reached = True
+                    
+            else:
+                v = 0
+            
             
             
         return v
@@ -681,7 +709,11 @@ class Flow(BuildingBlock):
 
     # Reset rate values
     def reset(self):
+        
+        super().reset(0)
+        
         self.rem = 0
+        self.limit_reached = False
 
         # v = self.rate_func() * self.parent.dt()
         
@@ -692,7 +724,8 @@ class Flow(BuildingBlock):
             
         v = self.calc()
         
-        super().reset(v/self.parent.dt())
+        #super().reset(v/self.parent.dt())
+        self.push_value(v/self.parent.dt())
         
     # Update the flow
     def update(self):

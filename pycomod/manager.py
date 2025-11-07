@@ -98,7 +98,7 @@ class RunManager:
         # Get reps from param or from init
         if reps is None:
             try:
-                reps = init['reps']
+                reps = init['run']['reps'][0]
             except KeyError:
                 reps = 100
 
